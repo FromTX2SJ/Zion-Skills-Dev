@@ -18,6 +18,22 @@ metadata: {"emoji":"🐦","category":"social","api_base":"https://api.x.com/2"}
 Monitor crypto KOLs on X (Twitter), draft contextual engagement messages, and post human-approved replies — all as a ZION cofounder.
 
 
+## 🎯 What You Need To Do
+
+After reading this skill, complete these tasks in order:
+
+1. **Set up credentials** — Save X API keys to `~/.config/zion-skills-dev/credentials.json` → [Authentication](#authentication)
+2. **Fetch your X profile** — Call `GET /2/users/me` to understand your persona → [Self-Identity](#self-identity)
+3. **Initialize watchlist** — Ask human for KOL list, resolve user IDs, auto-follow each → [Watchlist Management](#watchlist-management)
+4. **Register heartbeat** — Write task entry to `~/.openclaw/workspace/HEARTBEAT.md` → [Set Up Your Heartbeat](#set-up-your-heartbeat-💓)
+5. **Run first poll cycle** — Fetch HEARTBEAT.md from GitHub and execute it → [HEARTBEAT.md](https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md)
+
+> ⬇️ Details for each task are in the sections below.
+
+
+---
+
+
 ## Skill Files
 
 

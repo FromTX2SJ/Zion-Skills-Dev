@@ -33,6 +33,21 @@ source_url: https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-k
 **Purpose:** Fetch new tweets from watched KOLs, draft engagement proposals, push to human via `message_tool` for approval, execute approved actions. Also runs daily cycles for skill file updates and trend analysis.
 
 
+## 🎯 What To Do Each Cycle
+
+Every heartbeat cycle, execute these tasks in order:
+
+1. **Check 24h tasks** — If due: sync skill files from GitHub + run trend analysis → [24-Hour Cycles](#24-hour-cycles)
+2. **Execute pending approvals** — Check `pending-proposals.json` for approved/expired proposals → [Step 0](#step-0--pre-flight-checks)
+3. **Poll for new tweets** — Fetch latest tweets from watched KOLs → [Step 1](#step-1--fetch-new-tweets)
+4. **Triage & prioritize** — Score tweets by relevance, priority, metrics → [Step 2](#step-2--triage--prioritize)
+5. **Draft proposals** — Create engagement proposals using MESSAGE.md voice rules → [Step 3](#step-3--draft-engagement-proposals)
+6. **Push to human** — Send proposals via `message_tool`, save to pending queue — **non-blocking** → [Step 4](#step-4--push-to-human--save-as-pending-non-blocking)
+7. **Execute approved actions** — Run approved proposals, with RT/Quote fallback if needed → [Step 5](#step-5--execute-approved-actions)
+
+> ⬇️ Details for each step are in the sections below.
+
+
 ---
 
 
