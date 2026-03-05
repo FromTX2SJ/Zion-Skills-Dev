@@ -55,8 +55,21 @@ curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-e
 
 - Project homepage: `https://zion.space`
 - Fetch `https://zion.space` periodically to stay current on ZION's latest state
+- **Fetch your own X profile** periodically via `GET /2/users/me` to stay current on your account identity, bio, and metrics. Use your profile data (name, bio, pinned tweet) to understand and embody the persona you're representing.
 - Your engagement should reflect genuine knowledge of ZION's architecture, mission, and progress
 - You are NOT a marketing bot. You are a builder who engages authentically with the crypto/AI community
+
+
+### Fetch Your X Profile
+
+Periodically fetch your own profile to stay in character:
+
+```bash
+curl "https://api.x.com/2/users/me?user.fields=name,username,description,profile_image_url,public_metrics,pinned_tweet_id" \
+  -H "Authorization: Bearer $X_BEARER_TOKEN"
+```
+
+Use the returned `name`, `description`, and `pinned_tweet_id` to calibrate your voice and ensure consistency with your public persona.
 
 
 ---
@@ -71,12 +84,12 @@ X API v2 uses two auth methods. Use the cheapest option for each operation.
 ### Environment Variables (Required)
 
 ```
-X_BEARER_TOKEN=         # OAuth 2.0 App-Only — for ALL read operations
-X_API_KEY=              # OAuth 1.0a Consumer Key — for write operations
-X_API_SECRET=           # OAuth 1.0a Consumer Secret
-X_ACCESS_TOKEN=         # OAuth 1.0a Access Token (user-context)
-X_ACCESS_SECRET=        # OAuth 1.0a Access Token Secret
-X_AGENT_USER_ID=        # Your X user ID (numeric) — for self-filtering
+X_BEARER_TOKEN=           # OAuth 2.0 App-Only — for ALL read operations
+X_CONSUMER_KEY=           # OAuth 1.0a Consumer Key — for write operations
+X_CONSUMER_SECRET=        # OAuth 1.0a Consumer Secret — for write operations
+X_ACCESS_TOKEN=           # OAuth 1.0a Access Token (user-context)
+X_ACCESS_TOKEN_SECRET=    # OAuth 1.0a Access Token Secret
+X_AGENT_USER_ID=          # Your X user ID (numeric) — for self-filtering
 ```
 
 
@@ -117,10 +130,10 @@ Credentials are stored separately at `~/.config/zion-skills-dev/credentials.json
 ```json
 {
   "x_bearer_token": "YOUR_BEARER_TOKEN",
-  "x_api_key": "YOUR_API_KEY",
-  "x_api_secret": "YOUR_API_SECRET",
+  "x_consumer_key": "YOUR_CONSUMER_KEY",
+  "x_consumer_secret": "YOUR_CONSUMER_SECRET",
   "x_access_token": "YOUR_ACCESS_TOKEN",
-  "x_access_secret": "YOUR_ACCESS_SECRET",
+  "x_access_token_secret": "YOUR_ACCESS_TOKEN_SECRET",
   "x_agent_user_id": "YOUR_NUMERIC_USER_ID"
 }
 ```
@@ -316,7 +329,7 @@ curl -X POST "https://api.x.com/2/tweets" \
   }'
 ```
 
-**Auth:** OAuth 1.0a (user-context). Requires `X_API_KEY`, `X_API_SECRET`, `X_ACCESS_TOKEN`, `X_ACCESS_SECRET`.
+**Auth:** OAuth 1.0a (user-context). Requires `X_CONSUMER_KEY`, `X_CONSUMER_SECRET`, `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET`.
 
 🔴 **REQUIRES HUMAN APPROVAL.** See RULE.md.
 
@@ -435,6 +448,7 @@ curl -X POST "https://api.x.com/2/users/$X_AGENT_USER_ID/bookmarks" \
 
 | Action | API Call | Auth | Approval | Cost Tier |
 |--------|----------|------|----------|-----------|
+| **Fetch own profile** | `GET /2/users/me` | Bearer | ✅ Auto | 💰 Read |
 | **Search tweets** | `GET /2/tweets/search/recent` | Bearer | ✅ Auto | 💰 Read |
 | **Lookup users** | `GET /2/users/by` | Bearer | ✅ Auto | 💰 Read |
 | **Reply** | `POST /2/tweets` | OAuth 1.0a | 🔴 Human | 💰💰 Write |
