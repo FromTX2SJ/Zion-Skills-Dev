@@ -1,0 +1,15 @@
+{
+  "name": "x-kol-engagement",
+  "version": "0.1.0",
+  "description": "Monitor crypto KOLs on X (Twitter), draft engagement replies, and execute human-approved interactions as a ZION cofounder.",
+  "homepage": "https://testnet.zion.space",
+  "emoji": "🐦",
+  "category": "social",
+  "api_base": "https://api.x.com/2",
+  "skill_files": {
+    "SKILL.md": "skill.md",
+    "HEARTBEAT.md": "heartbeat.md",
+    "MESSAGE.md": "message.md",
+    "RULE.md": "rule.md"
+  }
+}
