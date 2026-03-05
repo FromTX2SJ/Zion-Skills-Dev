@@ -5,6 +5,12 @@ trigger: interval
 
 interval: 60
 
+quiet_hours:
+  timezone: America/Los_Angeles
+  start: "00:00"
+  end: "07:00"
+  interval: 180
+
 description: Poll X API for new KOL tweets, draft engagement proposals, execute approved actions.
 
 state_file: memory/heartbeat-state.json
@@ -22,7 +28,7 @@ source_url: https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-k
 # X KOL Engagement — Heartbeat
 
 
-**Cycle:** Every 60 minutes (configurable via `interval` above)
+**Cycle:** Every 60 minutes (180 minutes during quiet hours 00:00–07:00 PT)
 
 **Purpose:** Fetch new tweets from watched KOLs, draft engagement proposals, present to human for approval, execute approved actions.
 
@@ -86,6 +92,10 @@ STATUS → POLLING
 4. **Check date rollover** — if `today` ≠ current date, reset `actions_today` counters to 0
 5. **Check daily rate limits** — if any counter is at daily cap (see RULE.md), skip those action types this cycle
 6. **Check consecutive errors** — if ≥ 3, double the interval (backoff). Log warning.
+7. **Check quiet hours** — determine current time in `America/Los_Angeles` (US Pacific):
+   - If between **00:00–07:00 PT**: use `quiet_hours.interval` = **180 minutes** (every 3 hours). Poll only, skip drafting proposals (human is likely asleep). Bookmark high-priority tweets for later.
+   - Otherwise: use default `interval` = **60 minutes**
+   - Log: "🌙 Quiet hours active — polling every 180 min" or "☀️ Normal hours — polling every 60 min"
 
 
 ### Step 1 — Fetch New Tweets
