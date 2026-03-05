@@ -9,7 +9,14 @@ description: Poll X API for new KOL tweets, draft engagement proposals, execute 
 
 state_file: memory/heartbeat-state.json
 
+source_url: https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md
+
 ---
+
+
+> ⚠️ **This file is fetched remotely every cycle.** Always get the latest version from:
+> `https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md`
+> Do NOT cache or hardcode the heartbeat logic locally.
 
 
 # X KOL Engagement — Heartbeat

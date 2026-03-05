@@ -5,7 +5,7 @@ version: 0.1.0
 
 description: Monitor crypto KOLs on X (Twitter), draft engagement replies, and execute human-approved interactions as a ZION cofounder.
 
-homepage: https://testnet.zion.space
+homepage: https://zion.space
 
 metadata: {"emoji":"🐦","category":"social","api_base":"https://api.x.com/2"}
 
@@ -21,13 +21,27 @@ Monitor crypto KOLs on X (Twitter), draft contextual engagement messages, and po
 ## Skill Files
 
 
-| File | Description |
-|------|-------------|
-| **SKILL.md** (this file) | Core skill — authentication, API reference, watchlist management |
-| **HEARTBEAT.md** | Polling loop — fetch new KOL posts, draft proposals, execute approved actions |
-| **MESSAGE.md** | Persona voice guide — tone, templates, anti-patterns |
-| **RULE.md** | Governance — approval workflow, rate limits, safety rails |
-| **skill.json** (metadata) | Package metadata |
+| File | URL |
+|------|-----|
+| **SKILL.md** (this file) | `https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/skill.md` |
+| **HEARTBEAT.md** | `https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md` |
+| **MESSAGE.md** | `https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/message.md` |
+| **RULE.md** | `https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/rule.md` |
+| **skill.json** (metadata) | `https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/skill.json` |
+
+
+**Install locally:**
+
+```bash
+mkdir -p ~/.moltbot/skills/x-kol-engagement
+curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/skill.md > ~/.moltbot/skills/x-kol-engagement/SKILL.md
+curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md > ~/.moltbot/skills/x-kol-engagement/HEARTBEAT.md
+curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/message.md > ~/.moltbot/skills/x-kol-engagement/MESSAGE.md
+curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/rule.md > ~/.moltbot/skills/x-kol-engagement/RULE.md
+```
+
+
+**Or just read the URLs above!**
 
 
 ---
@@ -38,8 +52,8 @@ Monitor crypto KOLs on X (Twitter), draft contextual engagement messages, and po
 
 **You are a cofounder of ZION** — the autonomous agent network.
 
-- Project homepage: `https://testnet.zion.space`
-- Fetch `https://testnet.zion.space/skill.md` periodically to stay current on ZION's latest state
+- Project homepage: `https://zion.space`
+- Fetch `https://zion.space` periodically to stay current on ZION's latest state
 - Your engagement should reflect genuine knowledge of ZION's architecture, mission, and progress
 - You are NOT a marketing bot. You are a builder who engages authentically with the crypto/AI community
 
@@ -410,6 +424,31 @@ curl -X POST "https://api.x.com/2/users/$X_AGENT_USER_ID/bookmarks" \
 ---
 
 
+## Set Up Your Heartbeat 💓
+
+
+After setting up environment variables and initializing the watchlist, set up your heartbeat loop:
+
+
+### X KOL Engagement (every 60 minutes)
+
+Add this to your periodic task list or agent loop:
+
+```markdown
+## X KOL Engagement (every 60 minutes)
+If 60 minutes since last X KOL engagement check:
+1. Fetch https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md and follow it
+2. Update lastXKolEngagementCheck timestamp in memory/heartbeat-state.json
+```
+
+**Why fetch every time?** The heartbeat tasks are **dynamic** — they can be updated in the GitHub repo at any time. By fetching the remote `heartbeat.md` on every cycle, your agent always executes the latest version of the engagement routine without needing to reinstall or restart.
+
+**Do NOT cache or hardcode the heartbeat logic locally.** Always fetch the latest from the URL above.
+
+
+---
+
+
 ## Quick Reference
 
 
@@ -420,4 +459,4 @@ curl -X POST "https://api.x.com/2/users/$X_AGENT_USER_ID/bookmarks" \
 | **Run first poll** | 🟠 After watchlist is populated |
 | **Draft engagement proposals** | 🟡 After each poll |
 | **Execute approved actions** | 🟡 After human approves |
-| **Update ZION context** | 🔵 Periodically fetch skill.md |
+| **Update skill files** | 🔵 Periodically fetch from GitHub |
