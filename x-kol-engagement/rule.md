@@ -24,6 +24,8 @@ Rules governing approval workflows, rate limits, safety rails, and watchlist man
 | **Like** | 🔴 YES | Publicly visible on profile |
 | **Retweet** | 🔴 YES | Publicly visible on profile |
 | **Follow** | 🔴 YES | Publicly visible, signals alignment |
+| **Follow (on watchlist add)** | ✅ AUTO | Human's "add @handle" implies intent to follow |
+| **Original post** | 🔴 YES | Public, represents ZION brand |
 | **Bookmark** | ✅ AUTO | Private — no public visibility |
 | **Search tweets** | ✅ AUTO | Read-only |
 | **Lookup users** | ✅ AUTO | Read-only |
@@ -115,6 +117,7 @@ Enforced per heartbeat poll cycle (default: 60 min).
 | Quote Tweets | 3 |
 | Retweets | 5 |
 | Follows | 2 |
+| Original Posts | 1 |
 | Bookmarks | No limit |
 
 
@@ -129,6 +132,7 @@ Reset at 00:00 UTC. Tracked in `memory/heartbeat-state.json`.
 | Quote Tweets | 10 |
 | Retweets | 20 |
 | Follows | 5 |
+| Original Posts | 3 |
 | Bookmarks | No limit |
 
 
@@ -275,6 +279,23 @@ Remove them to save API costs? Reply "remove @handle" for each.
 | Network timeout | Retry once. If failing, skip cycle, increment `consecutive_errors` |
 
 
+### Retweet / Quote Tweet Fallback
+
+If a **retweet** or **quote tweet** fails (403, 429, or any error), the agent MUST attempt a fallback:
+
+1. **Construct a fallback tweet:** `"{draft_text}\n\n@{handle} https://x.com/{handle}/status/{tweet_id}"`
+2. **Post as a regular tweet** via `POST /2/tweets` (no `reply` or `quote_tweet_id` params)
+3. **Log:** `⚠️ Quote/RT failed → fallback posted as mention tweet`
+4. **If fallback also fails** → skip, log error, notify human
+
+| Original Action | Fallback Format |
+|----------------|----------------|
+| Retweet | `"🔁 @handle https://x.com/handle/status/ID"` |
+| Quote tweet | `"{draft_text}\n\n@handle https://x.com/handle/status/ID"` |
+
+This fallback does NOT apply to replies, likes, or follows (they are binary — succeed or fail).
+
+
 ### Edge Cases
 
 | Scenario | Rule |
@@ -285,6 +306,8 @@ Remove them to save API costs? Reply "remove @handle" for each.
 | Tweet mentions ZION directly | High priority — always propose engagement |
 | Tweet is a thread (conversation_id ≠ tweet_id) | Reply to the thread starter, not individual parts |
 | Human hasn't responded to proposals in 3+ cycles | Pause engagement proposals, continue polling silently |
+| Pending proposals > 24 hours old | Auto-expire, remove from queue |
+| Pending proposals queue > 20 | Expire oldest pending proposals first |
 
 
 ---

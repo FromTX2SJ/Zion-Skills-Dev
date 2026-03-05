@@ -122,7 +122,11 @@ All skill files and state are stored under `~/.openclaw/skills/zion-skills-dev/x
 └── memory/
     ├── heartbeat-state.json          # Heartbeat cycle state
     ├── x-watchlist.json              # KOL watchlist
-    └── x-poll-state.json             # Poll tracking state
+    ├── x-poll-state.json             # Poll tracking state
+    ├── pending-proposals.json        # Non-blocking approval queue
+    ├── skill-update-state.json       # 24h skill file sync state
+    ├── trend-state.json              # 24h trend analysis state
+    └── reply-style-tracker.json      # Anti-monotony tracking (see MESSAGE.md)
 ```
 
 Credentials are stored separately at `~/.config/zion-skills-dev/credentials.json`:
@@ -137,6 +141,7 @@ Credentials are stored separately at `~/.config/zion-skills-dev/credentials.json
   "x_agent_user_id": "YOUR_NUMERIC_USER_ID"
 }
 ```
+
 
 **Recommended:** Save your X API credentials to `~/.config/zion-skills-dev/credentials.json` after your human provides them. You can also use environment variables (`X_BEARER_TOKEN`, etc.) or your own memory — but this file is the canonical location.
 
@@ -188,11 +193,25 @@ Your human manages the watchlist via natural language:
 
 | Command | Action |
 |---------|--------|
-| "add @handle" | Resolve user ID via API, append to watchlist |
-| "add @handle tags:defi,founder priority:high" | Add with metadata |
-| "remove @handle" | Remove from watchlist |
+| "add @handle" | Resolve user ID via API, append to watchlist, **auto-follow** |
+| "add @handle tags:defi,founder priority:high" | Add with metadata, **auto-follow** |
+| "remove @handle" | Remove from watchlist (does NOT unfollow) |
 | "show watchlist" | Display current watchlist as a formatted table |
 | "update @handle notes:..." | Update notes/tags/priority for existing entry |
+
+
+### Auto-Follow on Add
+
+When a user is added to the watchlist, the agent **automatically follows them** without requiring separate approval. The rationale: if the human explicitly asks to monitor a KOL, following them is implied intent.
+
+**On `add @handle`:**
+1. Resolve `user_id` via `GET /2/users/by`
+2. Add to `memory/x-watchlist.json`
+3. **Auto-follow** via `POST /2/users/$X_AGENT_USER_ID/following` with `target_user_id`
+4. Log: `✅ Added @handle to watchlist and followed`
+5. If follow fails (already following, rate limit, etc.) — log warning but still add to watchlist
+
+This is an **auto-approved action** — see RULE.md for the governance rule.
 
 
 ### User ID Resolution (One-Time Per Handle)
@@ -455,8 +474,10 @@ curl -X POST "https://api.x.com/2/users/$X_AGENT_USER_ID/bookmarks" \
 | **Quote tweet** | `POST /2/tweets` | OAuth 1.0a | 🔴 Human | 💰💰 Write |
 | **Like** | `POST /2/users/:id/likes` | OAuth 1.0a | 🔴 Human | 💰💰 Write |
 | **Retweet** | `POST /2/users/:id/retweets` | OAuth 1.0a | 🔴 Human | 💰💰 Write |
-| **Follow** | `POST /2/users/:id/following` | OAuth 1.0a | 🔴 Human | 💰💰 Write |
+| **Follow** | `POST /2/users/:id/following` | OAuth 1.0a | 🔴 Human (✅ Auto on watchlist add) | 💰💰 Write |
+| **Follow (on add)** | `POST /2/users/:id/following` | OAuth 1.0a | ✅ Auto | 💰💰 Write |
 | **Bookmark** | `POST /2/users/:id/bookmarks` | OAuth 1.0a | ✅ Auto | 💰 Write |
+| **Original post** | `POST /2/tweets` | OAuth 1.0a | 🔴 Human | 💰💰 Write |
 
 
 ---
