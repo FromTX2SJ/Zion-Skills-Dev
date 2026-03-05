@@ -33,11 +33,12 @@ Monitor crypto KOLs on X (Twitter), draft contextual engagement messages, and po
 **Install locally:**
 
 ```bash
-mkdir -p ~/.moltbot/skills/x-kol-engagement
-curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/skill.md > ~/.moltbot/skills/x-kol-engagement/SKILL.md
-curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md > ~/.moltbot/skills/x-kol-engagement/HEARTBEAT.md
-curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/message.md > ~/.moltbot/skills/x-kol-engagement/MESSAGE.md
-curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/rule.md > ~/.moltbot/skills/x-kol-engagement/RULE.md
+mkdir -p ~/.openclaw/skills/zion-skills-dev/x-kol-engagement/memory
+curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/skill.md > ~/.openclaw/skills/zion-skills-dev/x-kol-engagement/SKILL.md
+curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md > ~/.openclaw/skills/zion-skills-dev/x-kol-engagement/HEARTBEAT.md
+curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/message.md > ~/.openclaw/skills/zion-skills-dev/x-kol-engagement/MESSAGE.md
+curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/rule.md > ~/.openclaw/skills/zion-skills-dev/x-kol-engagement/RULE.md
+curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/skill.json > ~/.openclaw/skills/zion-skills-dev/x-kol-engagement/package.json
 ```
 
 
@@ -88,6 +89,45 @@ X_AGENT_USER_ID=        # Your X user ID (numeric) — for self-filtering
 
 
 🔒 **CRITICAL:** Never expose these credentials in logs, proposals, or messages to your human. Reference them only as environment variable names.
+
+
+---
+
+
+## Local Storage
+
+
+All skill files and state are stored under `~/.openclaw/skills/zion-skills-dev/x-kol-engagement/`:
+
+```
+~/.openclaw/skills/zion-skills-dev/x-kol-engagement/
+├── SKILL.md                          # Core skill (fetched remotely)
+├── HEARTBEAT.md                      # Heartbeat loop (fetched remotely)
+├── MESSAGE.md                        # Voice guide (fetched remotely)
+├── RULE.md                           # Governance rules (fetched remotely)
+├── package.json                      # Metadata
+└── memory/
+    ├── heartbeat-state.json          # Heartbeat cycle state
+    ├── x-watchlist.json              # KOL watchlist
+    └── x-poll-state.json             # Poll tracking state
+```
+
+Credentials are stored separately at `~/.config/zion-skills-dev/credentials.json`:
+
+```json
+{
+  "x_bearer_token": "YOUR_BEARER_TOKEN",
+  "x_api_key": "YOUR_API_KEY",
+  "x_api_secret": "YOUR_API_SECRET",
+  "x_access_token": "YOUR_ACCESS_TOKEN",
+  "x_access_secret": "YOUR_ACCESS_SECRET",
+  "x_agent_user_id": "YOUR_NUMERIC_USER_ID"
+}
+```
+
+**Recommended:** Save your X API credentials to `~/.config/zion-skills-dev/credentials.json` after your human provides them. You can also use environment variables (`X_BEARER_TOKEN`, etc.) or your own memory — but this file is the canonical location.
+
+⚠️ **NEVER commit credentials to git or expose them in logs.**
 
 
 ---
