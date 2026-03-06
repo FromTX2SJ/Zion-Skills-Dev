@@ -23,7 +23,7 @@ Monitor crypto KOLs on X (Twitter), draft contextual engagement messages, and po
 After reading this skill, complete these tasks in order:
 
 1. **Set up credentials** — Save X API keys to `~/.config/zion-skills-dev/credentials.json` → [Authentication](#authentication)
-2. **Fetch your X profile** — Call `GET /2/users/me` to understand your persona → [Self-Identity](#self-identity)
+2. **Fetch your X profile** — Call `GET /2/users/$X_AGENT_USER_ID` to understand your persona → [Self-Identity](#self-identity)
 3. **Initialize watchlist** — Ask human for KOL list, resolve user IDs, auto-follow each → [Watchlist Management](#watchlist-management)
 4. **Register heartbeat** — Write task entry to `~/.openclaw/workspace/HEARTBEAT.md` → [Set Up Your Heartbeat](#set-up-your-heartbeat-💓)
 5. **Run first poll cycle** — Fetch HEARTBEAT.md from GitHub and execute it → [HEARTBEAT.md](https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md)
@@ -71,7 +71,7 @@ curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-e
 
 - Project homepage: `https://zion.space`
 - Fetch `https://zion.space` periodically to stay current on ZION's latest state
-- **Fetch your own X profile** periodically via `GET /2/users/me` to stay current on your account identity, bio, and metrics. Use your profile data (name, bio, pinned tweet) to understand and embody the persona you're representing.
+- **Fetch your own X profile** periodically via `GET /2/users/$X_AGENT_USER_ID` to stay current on your account identity, bio, and metrics. Use your profile data (name, bio, pinned tweet) to understand and embody the persona you're representing.
 - Your engagement should reflect genuine knowledge of ZION's architecture, mission, and progress
 - You are NOT a marketing bot. You are a builder who engages authentically with the crypto/AI community
 
@@ -350,35 +350,50 @@ curl -G "https://api.x.com/2/tweets/search/recent" \
 **Pagination:** If `meta.next_token` exists, there are more results. Pass it as `next_token` param. But try to avoid pagination by using `since_id` properly.
 
 
-### Post a Tweet (Reply)
+### OAuth 1.0a Setup (Required for All Writes)
+
+OAuth 1.0a requires HMAC-SHA1 signature generation — use the `requests-oauthlib` Python library:
 
 ```bash
-curl -X POST "https://api.x.com/2/tweets" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: OAuth ..." \
-  -d '{
-    "text": "Your reply text here",
-    "reply": {
-      "in_reply_to_tweet_id": "ORIGINAL_TWEET_ID"
-    }
-  }'
+pip3 install requests requests-oauthlib
 ```
 
-**Auth:** OAuth 1.0a (user-context). Requires `X_CONSUMER_KEY`, `X_CONSUMER_SECRET`, `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET`.
+```python
+from requests_oauthlib import OAuth1Session
+import json
+
+# Load credentials from ~/.config/zion-skills-dev/credentials.json
+# or from environment variables
+oauth = OAuth1Session(
+    client_key=X_CONSUMER_KEY,
+    client_secret=X_CONSUMER_SECRET,
+    resource_owner_key=X_ACCESS_TOKEN,
+    resource_owner_secret=X_ACCESS_TOKEN_SECRET
+)
+```
+
+All write endpoints below use this `oauth` session. The library handles signature generation automatically.
+
+
+### Post a Tweet (Reply)
+
+```python
+resp = oauth.post("https://api.x.com/2/tweets", json={
+    "text": "Your reply text here",
+    "reply": {"in_reply_to_tweet_id": "ORIGINAL_TWEET_ID"}
+})
+```
 
 🔴 **REQUIRES HUMAN APPROVAL.** See RULE.md.
 
 
 ### Post a Quote Tweet
 
-```bash
-curl -X POST "https://api.x.com/2/tweets" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: OAuth ..." \
-  -d '{
+```python
+resp = oauth.post("https://api.x.com/2/tweets", json={
     "text": "Your commentary here",
     "quote_tweet_id": "ORIGINAL_TWEET_ID"
-  }'
+})
 ```
 
 🔴 **REQUIRES HUMAN APPROVAL.**
@@ -386,11 +401,9 @@ curl -X POST "https://api.x.com/2/tweets" \
 
 ### Like a Tweet
 
-```bash
-curl -X POST "https://api.x.com/2/users/$X_AGENT_USER_ID/likes" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: OAuth ..." \
-  -d '{"tweet_id": "TWEET_ID"}'
+```python
+resp = oauth.post(f"https://api.x.com/2/users/{X_AGENT_USER_ID}/likes",
+    json={"tweet_id": "TWEET_ID"})
 ```
 
 🔴 **REQUIRES HUMAN APPROVAL.**
@@ -398,11 +411,9 @@ curl -X POST "https://api.x.com/2/users/$X_AGENT_USER_ID/likes" \
 
 ### Retweet
 
-```bash
-curl -X POST "https://api.x.com/2/users/$X_AGENT_USER_ID/retweets" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: OAuth ..." \
-  -d '{"tweet_id": "TWEET_ID"}'
+```python
+resp = oauth.post(f"https://api.x.com/2/users/{X_AGENT_USER_ID}/retweets",
+    json={"tweet_id": "TWEET_ID"})
 ```
 
 🔴 **REQUIRES HUMAN APPROVAL.**
@@ -410,26 +421,67 @@ curl -X POST "https://api.x.com/2/users/$X_AGENT_USER_ID/retweets" \
 
 ### Follow a User
 
-```bash
-curl -X POST "https://api.x.com/2/users/$X_AGENT_USER_ID/following" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: OAuth ..." \
-  -d '{"target_user_id": "TARGET_USER_ID"}'
+```python
+resp = oauth.post(f"https://api.x.com/2/users/{X_AGENT_USER_ID}/following",
+    json={"target_user_id": "TARGET_USER_ID"})
+```
+
+🔴 **REQUIRES HUMAN APPROVAL.**
+
+⚠️ **No batch follow API.** To follow multiple users, loop and call one at a time. Rate limit: 15 requests per 15 minutes.
+
+
+### Bookmark a Tweet (Private — No Approval Needed)
+
+```python
+resp = oauth.post(f"https://api.x.com/2/users/{X_AGENT_USER_ID}/bookmarks",
+    json={"tweet_id": "TWEET_ID"})
+```
+
+✅ No approval needed — bookmarks are private.
+
+
+### Post an Original Tweet
+
+```python
+resp = oauth.post("https://api.x.com/2/tweets", json={
+    "text": "Your original post text here"
+})
 ```
 
 🔴 **REQUIRES HUMAN APPROVAL.**
 
 
-### Bookmark a Tweet (Private — No Approval Needed)
+### Response Handling
 
-```bash
-curl -X POST "https://api.x.com/2/users/$X_AGENT_USER_ID/bookmarks" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: OAuth ..." \
-  -d '{"tweet_id": "TWEET_ID"}'
+All write endpoints return the same response structure. Handle responses like this:
+
+```python
+if resp.status_code in (200, 201):
+    data = resp.json()
+    tweet_id = data["data"]["id"]  # for tweets
+    # Success — log and update state
+elif resp.status_code == 429:
+    # Rate limited — stop execution, back off until x-rate-limit-reset header
+    reset_time = resp.headers.get("x-rate-limit-reset")
+    # Notify human via message_tool
+elif resp.status_code in (401, 403):
+    # Auth error — stop, notify human to check credentials
+    # For 403 on retweet/quote: try RT/Quote fallback (see HEARTBEAT.md)
+else:
+    # Other error — log, increment consecutive_errors
+    error_detail = resp.json().get("detail", resp.text)
 ```
 
-✅ No approval needed — bookmarks are private.
+**Success response example (POST /2/tweets):**
+```json
+{
+  "data": {
+    "id": "1234567899",
+    "text": "Your reply text here"
+  }
+}
+```
 
 
 ---
@@ -483,7 +535,7 @@ curl -X POST "https://api.x.com/2/users/$X_AGENT_USER_ID/bookmarks" \
 
 | Action | API Call | Auth | Approval | Cost Tier |
 |--------|----------|------|----------|-----------|
-| **Fetch own profile** | `GET /2/users/me` | Bearer | ✅ Auto | 💰 Read |
+| **Fetch own profile** | `GET /2/users/$X_AGENT_USER_ID` | Bearer | ✅ Auto | 💰 Read |
 | **Search tweets** | `GET /2/tweets/search/recent` | Bearer | ✅ Auto | 💰 Read |
 | **Lookup users** | `GET /2/users/by` | Bearer | ✅ Auto | 💰 Read |
 | **Reply** | `POST /2/tweets` | OAuth 1.0a | 🔴 Human | 💰💰 Write |
