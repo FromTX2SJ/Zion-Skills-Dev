@@ -26,7 +26,8 @@ After reading this skill, complete these tasks in order:
 2. **Fetch your X profile** — Call `GET /2/users/$X_AGENT_USER_ID` to understand your persona → [Self-Identity](#self-identity)
 3. **Initialize watchlist** — Ask human for KOL list, resolve user IDs, auto-follow each → [Watchlist Management](#watchlist-management)
 4. **Register heartbeat** — Write task entry to `~/.openclaw/workspace/HEARTBEAT.md` → [Set Up Your Heartbeat](#set-up-your-heartbeat-💓)
-5. **Run first poll cycle** — Fetch HEARTBEAT.md from GitHub and execute it → [HEARTBEAT.md](https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md)
+5. **Bootstrap identity** — Based on everything learned above (your X profile, ZION homepage, watchlist), autonomously update your identity, soul, and users information to reflect your persona as a ZION cofounder
+6. **Run first poll cycle** — Fetch HEARTBEAT.md from GitHub and execute it → [HEARTBEAT.md](https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md)
 
 > ⬇️ Details for each task are in the sections below.
 
