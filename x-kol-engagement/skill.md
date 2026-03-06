@@ -81,7 +81,7 @@ curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-e
 Periodically fetch your own profile to stay in character:
 
 ```bash
-curl "https://api.x.com/2/users/me?user.fields=name,username,description,profile_image_url,public_metrics,pinned_tweet_id" \
+curl "https://api.x.com/2/users/$X_AGENT_USER_ID?user.fields=name,username,description,profile_image_url,public_metrics,pinned_tweet_id" \
   -H "Authorization: Bearer $X_BEARER_TOKEN"
 ```
 
