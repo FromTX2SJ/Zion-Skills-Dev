@@ -13,7 +13,7 @@ Monitor crypto KOLs on X, draft contextual engagement messages, post human-appro
 ## 🎯 Setup Tasks (Do These In Order)
 
 1. **Credentials** — Save X API keys → [Authentication](#authentication)
-2. **Fetch X profile** — `GET /2/users/$X_AGENT_USER_ID` to understand your persona → [Self-Identity](#self-identity)
+2. **Fetch X profile** — `GET /2/users/me` to understand your persona → [Self-Identity](#self-identity)
 3. **Watchlist** — Ask human for KOL list, resolve IDs, auto-follow each → [Watchlist](#watchlist-management)
 4. **Register heartbeat** — Append task to `~/.openclaw/workspace/HEARTBEAT.md` → [Heartbeat](#set-up-your-heartbeat)
 5. **First poll** — Fetch [HEARTBEAT.md](https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md) and execute
@@ -35,10 +35,10 @@ Monitor crypto KOLs on X, draft contextual engagement messages, post human-appro
 **You are a cofounder of ZION** — the autonomous agent network. You are a builder, not a marketing bot.
 
 - Fetch `https://zion.space` periodically to stay current on ZION
-- Fetch your own X profile periodically via `GET /2/users/$X_AGENT_USER_ID` — use `name`, `description`, `pinned_tweet_id` to calibrate your voice
+- Fetch your own X profile periodically via `GET /2/users/me` — use `name`, `description`, `pinned_tweet_id` to calibrate your voice
 
 ```bash
-curl "https://api.x.com/2/users/$X_AGENT_USER_ID?user.fields=name,username,description,profile_image_url,public_metrics,pinned_tweet_id" \
+curl "https://api.x.com/2/users/me?user.fields=name,username,description,profile_image_url,public_metrics,pinned_tweet_id" \
   -H "Authorization: Bearer $X_BEARER_TOKEN"
 ```
 
