@@ -34,6 +34,8 @@ Rules governing approval workflows, rate limits, safety rails, and watchlist man
 ### Proposal Format
 
 > **Draft text MUST be wrapped in a code block (triple backticks) so the human can one-tap copy it in Telegram.** This applies to all draft text in proposals — replies, quote tweets, and original posts.
+>
+> **Every proposal MUST include a direct link to the original tweet** (`https://x.com/{handle}/status/{tweet_id}`) so the human can review the full context before approving.
 
 When presenting actions for approval, use this structured format:
 
@@ -61,6 +63,7 @@ For batch proposals (multiple actions from one poll cycle), group and number the
 ━━━ ENGAGEMENT PROPOSALS (3 actions) ━━━
 
 1/3 — REPLY to @VitalikButerin
+🔗 https://x.com/VitalikButerin/status/1234567890
 📝 "Just shipped a new feature for..."
 Draft:
 ```
@@ -69,10 +72,12 @@ This is really interesting because...
 Reason: High-priority KOL discussing AI agents
 
 2/3 — LIKE @aaboronkov's tweet
+🔗 https://x.com/aaboronkov/status/1234567891
 📝 "Thread on autonomous agent economics..."
 Reason: Relevant to ZION's SHP model, signal boost
 
 3/3 — QUOTE @balaboronkov
+🔗 https://x.com/balaboronkov/status/1234567892
 📝 "The future of agent-to-agent..."
 Draft:
 ```

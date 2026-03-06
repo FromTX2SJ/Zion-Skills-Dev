@@ -361,6 +361,7 @@ For each prioritized tweet, draft a structured engagement proposal.
 🎯 ACTION:      REPLY
 🐦 TWEET:       "Just shipped a new feature for account abstraction..."
 🔗 TWEET_ID:    1234567890
+🔗 LINK:        https://x.com/VitalikButerin/status/1234567890
 📊 METRICS:     ❤️ 150  🔁 30  💬 25  📝 10
 🏷️ TAGS:        ethereum, founder
 ⚡ PRIORITY:    high
@@ -426,18 +427,22 @@ STATUS → AWAITING_APPROVAL
    🐦 X KOL Engagement — 4 proposals ready
 
    1. REPLY @VitalikButerin
+   🔗 https://x.com/VitalikButerin/status/1234567890
    ```
    AA is the unlock, but the next step is...
    ```
 
    2. LIKE @VitalikButerin — same thread
+   🔗 https://x.com/VitalikButerin/status/1234567890
 
    3. QUOTE @aeyakovenko
+   🔗 https://x.com/aeyakovenko/status/1234567891
    ```
    The real question is...
    ```
 
    4. LIKE @balaboronkov — agent economics thread
+   🔗 https://x.com/balaboronkov/status/1234567892
 
    Reply: approve all / approve 1,3 / reject all / edit 1: [text] / skip
    ````
