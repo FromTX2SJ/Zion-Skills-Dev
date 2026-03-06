@@ -61,14 +61,14 @@ Autonomous X (Twitter) engagement skill for ZION cofounders. Polls KOL tweets, d
     └── reply-style-tracker.json    # Anti-monotony tracking
 ```
 
-Credentials: `~/.config/zion-skills-dev/credentials.json`
+Authentication: managed by [xurl](https://github.com/xdevplatform/xurl) (stored in `~/.xurl`)
 
 
 ### Quick Start
 
 1. Agent reads [`skill.md`](x-kol-engagement/skill.md) and follows the **🎯 What You Need To Do** task list
-2. Sets up X API credentials (Bearer Token + OAuth 1.0a)
-3. Fetches own X profile via `GET /2/users/$X_AGENT_USER_ID`
+2. Verifies xurl is installed and authenticated (`xurl auth status`)
+3. Fetches own X profile via `xurl /2/users/me`
 4. Asks human for initial KOL watchlist → auto-follows each
 5. Registers heartbeat task in `~/.openclaw/workspace/HEARTBEAT.md`
 6. Every 60 min: fetches [`heartbeat.md`](x-kol-engagement/heartbeat.md) from GitHub and executes it

@@ -18,12 +18,31 @@ metadata: {"emoji":"🐦","category":"social","api_base":"https://api.x.com/2"}
 Monitor crypto KOLs on X (Twitter), draft contextual engagement messages, and post human-approved replies — all as a ZION cofounder.
 
 
+## 🔧 Prerequisites
+
+This skill requires the **xurl** CLI tool for all X API interactions (reads and writes).
+
+> ⚠️ **Before starting, tell your human:**
+> "This skill requires the **xurl** tool to interact with the X API. Please install and configure xurl first."
+>
+> xurl GitHub: https://github.com/xdevplatform/xurl
+>
+> Once xurl is installed and authenticated, **learn the xurl skill yourself** by reading its documentation
+> to understand the full capabilities (auth management, request syntax, `--auth` flags, etc.).
+>
+> Verify xurl is ready by running:
+> ```bash
+> xurl auth status
+> ```
+> You should see at least one app with oauth2 or oauth1 + bearer configured.
+
+
 ## 🎯 What You Need To Do
 
 After reading this skill, complete these tasks in order:
 
-1. **Set up credentials** — Save X API keys to `~/.config/zion-skills-dev/credentials.json` → [Authentication](#authentication)
-2. **Fetch your X profile** — Call `GET /2/users/$X_AGENT_USER_ID` to understand your persona → [Self-Identity](#self-identity)
+1. **Verify xurl is ready** — Run `xurl auth status` to confirm authentication is configured. If not, ask your human to install and set up xurl first.
+2. **Fetch your X profile** — Call `xurl /2/users/me` to understand your persona → [Self-Identity](#self-identity)
 3. **Initialize watchlist** — Ask human for KOL list, resolve user IDs, auto-follow each → [Watchlist Management](#watchlist-management)
 4. **Register heartbeat** — Write task entry to `~/.openclaw/workspace/HEARTBEAT.md` → [Set Up Your Heartbeat](#set-up-your-heartbeat-💓)
 5. **Bootstrap identity** — Based on everything learned above (your X profile, ZION homepage, watchlist), autonomously update your identity, soul, and users information to reflect your persona as a ZION cofounder
@@ -72,7 +91,7 @@ curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-e
 
 - Project homepage: `https://zion.space`
 - Fetch `https://zion.space` periodically to stay current on ZION's latest state
-- **Fetch your own X profile** periodically via `GET /2/users/$X_AGENT_USER_ID` to stay current on your account identity, bio, and metrics. Use your profile data (name, bio, pinned tweet) to understand and embody the persona you're representing.
+- **Fetch your own X profile** periodically via `xurl /2/users/me` to stay current on your account identity, bio, and metrics. Use your profile data (name, bio, pinned tweet) to understand and embody the persona you're representing.
 - Your engagement should reflect genuine knowledge of ZION's architecture, mission, and progress
 - You are NOT a marketing bot. You are a builder who engages authentically with the crypto/AI community
 
@@ -82,43 +101,12 @@ curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-e
 Periodically fetch your own profile to stay in character:
 
 ```bash
-curl "https://api.x.com/2/users/$X_AGENT_USER_ID?user.fields=name,username,description,profile_image_url,public_metrics,pinned_tweet_id" \
-  -H "Authorization: Bearer $X_BEARER_TOKEN"
+xurl "/2/users/me?user.fields=name,username,description,profile_image_url,public_metrics,pinned_tweet_id"
 ```
 
 Use the returned `name`, `description`, and `pinned_tweet_id` to calibrate your voice and ensure consistency with your public persona.
 
-
----
-
-
-## Authentication
-
-
-X API v2 uses two auth methods. Use the cheapest option for each operation.
-
-
-### Environment Variables (Required)
-
-```
-X_BEARER_TOKEN=           # OAuth 2.0 App-Only — for ALL read operations
-X_CONSUMER_KEY=           # OAuth 1.0a Consumer Key — for write operations
-X_CONSUMER_SECRET=        # OAuth 1.0a Consumer Secret — for write operations
-X_ACCESS_TOKEN=           # OAuth 1.0a Access Token (user-context)
-X_ACCESS_TOKEN_SECRET=    # OAuth 1.0a Access Token Secret
-X_AGENT_USER_ID=          # Your X user ID (numeric) — for self-filtering
-```
-
-
-### When to Use What
-
-| Auth Method | Use For | Cost |
-|-------------|---------|------|
-| **Bearer Token** (OAuth 2.0) | All reads: search tweets, lookup users, get timelines | Lower |
-| **OAuth 1.0a** (user-context) | All writes: post tweet, like, retweet, follow, reply | Required |
-
-
-🔒 **CRITICAL:** Never expose these credentials in logs, proposals, or messages to your human. Reference them only as environment variable names.
+> **Important:** The response includes your numeric `id` field. Cache this as your **agent user ID** — you'll need it for endpoints like `POST /2/users/:id/likes`, `POST /2/users/:id/following`, etc.
 
 
 ---
@@ -147,23 +135,7 @@ All skill files and state are stored under `~/.openclaw/skills/zion-skills-dev/x
     └── reply-style-tracker.json      # Anti-monotony tracking (see MESSAGE.md)
 ```
 
-Credentials are stored separately at `~/.config/zion-skills-dev/credentials.json`:
-
-```json
-{
-  "x_bearer_token": "YOUR_BEARER_TOKEN",
-  "x_consumer_key": "YOUR_CONSUMER_KEY",
-  "x_consumer_secret": "YOUR_CONSUMER_SECRET",
-  "x_access_token": "YOUR_ACCESS_TOKEN",
-  "x_access_token_secret": "YOUR_ACCESS_TOKEN_SECRET",
-  "x_agent_user_id": "YOUR_NUMERIC_USER_ID"
-}
-```
-
-
-**Recommended:** Save your X API credentials to `~/.config/zion-skills-dev/credentials.json` after your human provides them. You can also use environment variables (`X_BEARER_TOKEN`, etc.) or your own memory — but this file is the canonical location.
-
-⚠️ **NEVER commit credentials to git or expose them in logs.**
+> **Authentication** is managed entirely by xurl (stored in `~/.xurl`). No separate credentials file needed.
 
 
 ---
@@ -225,7 +197,7 @@ When a user is added to the watchlist, the agent **automatically follows them** 
 **On `add @handle`:**
 1. Resolve `user_id` via `GET /2/users/by`
 2. Add to `memory/x-watchlist.json`
-3. **Auto-follow** via `POST /2/users/$X_AGENT_USER_ID/following` with `target_user_id`
+3. **Auto-follow** via `POST /2/users/:agent_user_id/following` with `target_user_id`
 4. Log: `✅ Added @handle to watchlist and followed`
 5. If follow fails (already following, rate limit, etc.) — log warning but still add to watchlist
 
@@ -237,8 +209,7 @@ This is an **auto-approved action** — see RULE.md for the governance rule.
 When adding a new handle, resolve the numeric `user_id` once and cache it:
 
 ```bash
-curl "https://api.x.com/2/users/by?usernames=VitalikButerin&user.fields=id,name,username,description,public_metrics" \
-  -H "Authorization: Bearer $X_BEARER_TOKEN"
+xurl "/2/users/by?usernames=VitalikButerin&user.fields=id,name,username,description,public_metrics"
 ```
 
 **Response:**
@@ -263,8 +234,7 @@ curl "https://api.x.com/2/users/by?usernames=VitalikButerin&user.fields=id,name,
 **Batch lookup** — resolve up to 100 usernames in one call:
 
 ```bash
-curl "https://api.x.com/2/users/by?usernames=user1,user2,user3&user.fields=id,name,username" \
-  -H "Authorization: Bearer $X_BEARER_TOKEN"
+xurl "/2/users/by?usernames=user1,user2,user3&user.fields=id,name,username"
 ```
 
 ⚠️ **Only call this once per user.** After resolving, store `user_id` in the watchlist. Never re-resolve unless the handle changes.
@@ -276,9 +246,12 @@ curl "https://api.x.com/2/users/by?usernames=user1,user2,user3&user.fields=id,na
 ## X API v2 Reference
 
 
-**Base URL:** `https://api.x.com/2`
+**Base URL:** `https://api.x.com/2` (xurl prepends this automatically — just use paths like `/2/users/me`)
 
 ⚠️ **X API v2 is pay-as-you-go.** Every API call costs money. Minimize calls. Batch where possible. Cache aggressively.
+
+> All examples below use `xurl`. xurl handles authentication automatically based on the endpoint.
+> For details on auth flags (`--auth oauth2`, `--auth oauth1`, `--auth app`), refer to the xurl documentation you learned during setup.
 
 
 ### Search Recent Tweets (Batched — Primary Polling Method)
@@ -286,14 +259,7 @@ curl "https://api.x.com/2/users/by?usernames=user1,user2,user3&user.fields=id,na
 The core of the polling loop. Search for recent tweets from ALL watched users in a single call.
 
 ```bash
-curl -G "https://api.x.com/2/tweets/search/recent" \
-  --data-urlencode "query=(from:user1 OR from:user2 OR from:user3) -is:reply -is:retweet" \
-  --data-urlencode "since_id=LAST_SEEN_TWEET_ID" \
-  --data-urlencode "max_results=100" \
-  --data-urlencode "tweet.fields=id,text,author_id,created_at,public_metrics,referenced_tweets,entities,conversation_id" \
-  --data-urlencode "expansions=author_id,referenced_tweets.id" \
-  --data-urlencode "user.fields=name,username" \
-  -H "Authorization: Bearer $X_BEARER_TOKEN"
+xurl "/2/tweets/search/recent?query=(from:user1 OR from:user2 OR from:user3) -is:reply -is:retweet&since_id=LAST_SEEN_TWEET_ID&max_results=100&tweet.fields=id,text,author_id,created_at,public_metrics,referenced_tweets,entities,conversation_id&expansions=author_id,referenced_tweets.id&user.fields=name,username"
 ```
 
 **Key Parameters:**
@@ -352,38 +318,10 @@ curl -G "https://api.x.com/2/tweets/search/recent" \
 **Pagination:** If `meta.next_token` exists, there are more results. Pass it as `next_token` param. But try to avoid pagination by using `since_id` properly.
 
 
-### OAuth 1.0a Setup (Required for All Writes)
-
-OAuth 1.0a requires HMAC-SHA1 signature generation — use the `requests-oauthlib` Python library:
-
-```bash
-pip3 install requests requests-oauthlib
-```
-
-```python
-from requests_oauthlib import OAuth1Session
-import json
-
-# Load credentials from ~/.config/zion-skills-dev/credentials.json
-# or from environment variables
-oauth = OAuth1Session(
-    client_key=X_CONSUMER_KEY,
-    client_secret=X_CONSUMER_SECRET,
-    resource_owner_key=X_ACCESS_TOKEN,
-    resource_owner_secret=X_ACCESS_TOKEN_SECRET
-)
-```
-
-All write endpoints below use this `oauth` session. The library handles signature generation automatically.
-
-
 ### Post a Tweet (Reply)
 
-```python
-resp = oauth.post("https://api.x.com/2/tweets", json={
-    "text": "Your reply text here",
-    "reply": {"in_reply_to_tweet_id": "ORIGINAL_TWEET_ID"}
-})
+```bash
+xurl -X POST /2/tweets -d '{"text":"Your reply text here","reply":{"in_reply_to_tweet_id":"ORIGINAL_TWEET_ID"}}'
 ```
 
 🔴 **REQUIRES HUMAN APPROVAL.** See RULE.md.
@@ -391,11 +329,8 @@ resp = oauth.post("https://api.x.com/2/tweets", json={
 
 ### Post a Quote Tweet
 
-```python
-resp = oauth.post("https://api.x.com/2/tweets", json={
-    "text": "Your commentary here",
-    "quote_tweet_id": "ORIGINAL_TWEET_ID"
-})
+```bash
+xurl -X POST /2/tweets -d '{"text":"Your commentary here","quote_tweet_id":"ORIGINAL_TWEET_ID"}'
 ```
 
 🔴 **REQUIRES HUMAN APPROVAL.**
@@ -403,9 +338,8 @@ resp = oauth.post("https://api.x.com/2/tweets", json={
 
 ### Like a Tweet
 
-```python
-resp = oauth.post(f"https://api.x.com/2/users/{X_AGENT_USER_ID}/likes",
-    json={"tweet_id": "TWEET_ID"})
+```bash
+xurl -X POST /2/users/AGENT_USER_ID/likes -d '{"tweet_id":"TWEET_ID"}'
 ```
 
 🔴 **REQUIRES HUMAN APPROVAL.**
@@ -413,9 +347,8 @@ resp = oauth.post(f"https://api.x.com/2/users/{X_AGENT_USER_ID}/likes",
 
 ### Retweet
 
-```python
-resp = oauth.post(f"https://api.x.com/2/users/{X_AGENT_USER_ID}/retweets",
-    json={"tweet_id": "TWEET_ID"})
+```bash
+xurl -X POST /2/users/AGENT_USER_ID/retweets -d '{"tweet_id":"TWEET_ID"}'
 ```
 
 🔴 **REQUIRES HUMAN APPROVAL.**
@@ -423,9 +356,8 @@ resp = oauth.post(f"https://api.x.com/2/users/{X_AGENT_USER_ID}/retweets",
 
 ### Follow a User
 
-```python
-resp = oauth.post(f"https://api.x.com/2/users/{X_AGENT_USER_ID}/following",
-    json={"target_user_id": "TARGET_USER_ID"})
+```bash
+xurl -X POST /2/users/AGENT_USER_ID/following -d '{"target_user_id":"TARGET_USER_ID"}'
 ```
 
 🔴 **REQUIRES HUMAN APPROVAL.**
@@ -435,9 +367,8 @@ resp = oauth.post(f"https://api.x.com/2/users/{X_AGENT_USER_ID}/following",
 
 ### Bookmark a Tweet (Private — No Approval Needed)
 
-```python
-resp = oauth.post(f"https://api.x.com/2/users/{X_AGENT_USER_ID}/bookmarks",
-    json={"tweet_id": "TWEET_ID"})
+```bash
+xurl -X POST /2/users/AGENT_USER_ID/bookmarks -d '{"tweet_id":"TWEET_ID"}'
 ```
 
 ✅ No approval needed — bookmarks are private.
@@ -445,10 +376,8 @@ resp = oauth.post(f"https://api.x.com/2/users/{X_AGENT_USER_ID}/bookmarks",
 
 ### Post an Original Tweet
 
-```python
-resp = oauth.post("https://api.x.com/2/tweets", json={
-    "text": "Your original post text here"
-})
+```bash
+xurl -X POST /2/tweets -d '{"text":"Your original post text here"}'
 ```
 
 🔴 **REQUIRES HUMAN APPROVAL.**
@@ -456,24 +385,12 @@ resp = oauth.post("https://api.x.com/2/tweets", json={
 
 ### Response Handling
 
-All write endpoints return the same response structure. Handle responses like this:
+xurl returns raw JSON from the X API. Parse the response to check for success or errors:
 
-```python
-if resp.status_code in (200, 201):
-    data = resp.json()
-    tweet_id = data["data"]["id"]  # for tweets
-    # Success — log and update state
-elif resp.status_code == 429:
-    # Rate limited — stop execution, back off until x-rate-limit-reset header
-    reset_time = resp.headers.get("x-rate-limit-reset")
-    # Notify human via message_tool
-elif resp.status_code in (401, 403):
-    # Auth error — stop, notify human to check credentials
-    # For 403 on retweet/quote: try RT/Quote fallback (see HEARTBEAT.md)
-else:
-    # Other error — log, increment consecutive_errors
-    error_detail = resp.json().get("detail", resp.text)
-```
+- **Success (200/201):** Response contains `"data"` with the created resource (e.g., `data.id` for new tweets)
+- **Rate limited (429):** Check response for rate limit info. Back off and retry after reset time.
+- **Auth error (401/403):** Notify human to check xurl auth config (`xurl auth status`). For 403 on retweet/quote: try RT/Quote fallback (see HEARTBEAT.md).
+- **Other errors:** Log the error detail from the response JSON.
 
 **Success response example (POST /2/tweets):**
 ```json
@@ -484,6 +401,8 @@ else:
   }
 }
 ```
+
+> **Note:** For endpoints requiring your user ID (likes, follows, retweets, bookmarks), use the `id` you cached from `xurl /2/users/me` during setup.
 
 
 ---
@@ -535,19 +454,21 @@ else:
 ## Engagement Actions Summary
 
 
-| Action | API Call | Auth | Approval | Cost Tier |
-|--------|----------|------|----------|-----------|
-| **Fetch own profile** | `GET /2/users/$X_AGENT_USER_ID` | Bearer | ✅ Auto | 💰 Read |
-| **Search tweets** | `GET /2/tweets/search/recent` | Bearer | ✅ Auto | 💰 Read |
-| **Lookup users** | `GET /2/users/by` | Bearer | ✅ Auto | 💰 Read |
-| **Reply** | `POST /2/tweets` | OAuth 1.0a | 🔴 Human | 💰💰 Write |
-| **Quote tweet** | `POST /2/tweets` | OAuth 1.0a | 🔴 Human | 💰💰 Write |
-| **Like** | `POST /2/users/:id/likes` | OAuth 1.0a | 🔴 Human | 💰💰 Write |
-| **Retweet** | `POST /2/users/:id/retweets` | OAuth 1.0a | 🔴 Human | 💰💰 Write |
-| **Follow** | `POST /2/users/:id/following` | OAuth 1.0a | 🔴 Human (✅ Auto on watchlist add) | 💰💰 Write |
-| **Follow (on add)** | `POST /2/users/:id/following` | OAuth 1.0a | ✅ Auto | 💰💰 Write |
-| **Bookmark** | `POST /2/users/:id/bookmarks` | OAuth 1.0a | ✅ Auto | 💰 Write |
-| **Original post** | `POST /2/tweets` | OAuth 1.0a | 🔴 Human | 💰💰 Write |
+| Action | Endpoint | Approval | Cost Tier |
+|--------|----------|----------|-----------|
+| **Fetch own profile** | `GET /2/users/me` | ✅ Auto | 💰 Read |
+| **Search tweets** | `GET /2/tweets/search/recent` | ✅ Auto | 💰 Read |
+| **Lookup users** | `GET /2/users/by` | ✅ Auto | 💰 Read |
+| **Reply** | `POST /2/tweets` | 🔴 Human | 💰💰 Write |
+| **Quote tweet** | `POST /2/tweets` | 🔴 Human | 💰💰 Write |
+| **Like** | `POST /2/users/:id/likes` | 🔴 Human | 💰💰 Write |
+| **Retweet** | `POST /2/users/:id/retweets` | 🔴 Human | 💰💰 Write |
+| **Follow** | `POST /2/users/:id/following` | 🔴 Human (✅ Auto on watchlist add) | 💰💰 Write |
+| **Follow (on add)** | `POST /2/users/:id/following` | ✅ Auto | 💰💰 Write |
+| **Bookmark** | `POST /2/users/:id/bookmarks` | ✅ Auto | 💰 Write |
+| **Original post** | `POST /2/tweets` | 🔴 Human | 💰💰 Write |
+
+> All endpoints are called via `xurl`. Auth is handled automatically by xurl.
 
 
 ---
@@ -602,7 +523,7 @@ If 60 minutes since last X KOL engagement check:
 
 | Action | Priority |
 |--------|----------|
-| **Set up env vars** | 🔴 Do first |
+| **Verify xurl is ready** | 🔴 Do first |
 | **Initialize watchlist** | 🔴 Ask human for initial KOL list |
 | **Run first poll** | 🟠 After watchlist is populated |
 | **Draft engagement proposals** | 🟡 After each poll |

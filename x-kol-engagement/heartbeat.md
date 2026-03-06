@@ -43,7 +43,7 @@ All `memory/` paths in this file are relative to:
 
 If a state file doesn't exist on first access, create it with the default schema shown in its section below.
 
-Credentials are stored separately at: `~/.config/zion-skills-dev/credentials.json`
+Authentication is managed by xurl (stored in `~/.xurl`). No separate credentials file needed.
 
 
 ## 🎯 What To Do Each Cycle
@@ -289,14 +289,7 @@ Build batched search queries from the watchlist.
 **API call:**
 
 ```bash
-curl -G "https://api.x.com/2/tweets/search/recent" \
-  --data-urlencode "query=(from:handle1 OR from:handle2 ...) -is:reply -is:retweet" \
-  --data-urlencode "since_id=$GLOBAL_SINCE_ID" \
-  --data-urlencode "max_results=100" \
-  --data-urlencode "tweet.fields=id,text,author_id,created_at,public_metrics,referenced_tweets,entities,conversation_id" \
-  --data-urlencode "expansions=author_id,referenced_tweets.id" \
-  --data-urlencode "user.fields=name,username" \
-  -H "Authorization: Bearer $X_BEARER_TOKEN"
+xurl "/2/tweets/search/recent?query=(from:handle1 OR from:handle2 ...) -is:reply -is:retweet&since_id=$GLOBAL_SINCE_ID&max_results=100&tweet.fields=id,text,author_id,created_at,public_metrics,referenced_tweets,entities,conversation_id&expansions=author_id,referenced_tweets.id&user.fields=name,username"
 ```
 
 **First poll (no `global_since_id`):**
@@ -477,15 +470,7 @@ For each approved proposal, execute in this order:
 **Execution template (Reply example):**
 
 ```bash
-curl -X POST "https://api.x.com/2/tweets" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: OAuth ..." \
-  -d '{
-    "text": "APPROVED_REPLY_TEXT",
-    "reply": {
-      "in_reply_to_tweet_id": "ORIGINAL_TWEET_ID"
-    }
-  }'
+xurl -X POST /2/tweets -d '{"text":"APPROVED_REPLY_TEXT","reply":{"in_reply_to_tweet_id":"ORIGINAL_TWEET_ID"}}'
 ```
 
 **After each action:**
@@ -515,12 +500,7 @@ If a **retweet** or **quote tweet** action fails (403, 429, or any error), apply
 
 2. **Post as an original tweet** (not a reply, not a quote — just a regular `POST /2/tweets`):
    ```bash
-   curl -X POST "https://api.x.com/2/tweets" \
-     -H "Content-Type: application/json" \
-     -H "Authorization: OAuth ..." \
-     -d '{
-       "text": "APPROVED_TEXT\n\n@handle https://x.com/handle/status/TWEET_ID"
-     }'
+   xurl -X POST /2/tweets -d '{"text":"APPROVED_TEXT\n\n@handle https://x.com/handle/status/TWEET_ID"}'
    ```
 
 3. **Log the fallback:**
@@ -554,7 +534,7 @@ If a **retweet** or **quote tweet** action fails (403, 429, or any error), apply
 
 | Error | Response |
 |-------|----------|
-| **401 Unauthorized** | Bearer token expired or invalid. Message human: "🔴 X API auth failed. Check credentials." STOP. |
+| **401 Unauthorized** | Auth token expired or invalid. Message human: "🔴 X API auth failed. Run `xurl auth status` to check." STOP. |
 | **403 Forbidden** | App permissions insufficient. For RT/Quote: try fallback. Otherwise message human. STOP. |
 | **429 Rate Limited** | Log the `x-rate-limit-reset` header. Back off until reset time. Message human. Do NOT retry immediately. |
 | **Network Error** | Increment `consecutive_errors`. Retry next cycle. |
