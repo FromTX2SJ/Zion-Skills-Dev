@@ -33,9 +33,11 @@ Rules governing approval workflows, rate limits, safety rails, and watchlist man
 
 ### Proposal Format
 
+> **Draft text MUST be wrapped in a code block (triple backticks) so the human can one-tap copy it in Telegram.** This applies to all draft text in proposals — replies, quote tweets, and original posts.
+
 When presenting actions for approval, use this structured format:
 
-```
+````
 ━━━ ENGAGEMENT PROPOSAL ━━━
 
 🎯 Target: @handle (priority: high)
@@ -44,21 +46,26 @@ When presenting actions for approval, use this structured format:
 
 Action: REPLY
 Draft:
-  "Your drafted reply text here."
+```
+Your drafted reply text here.
+```
 
 Reason: [1-sentence justification — why this engagement matters]
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
+````
 
 For batch proposals (multiple actions from one poll cycle), group and number them:
 
-```
+````
 ━━━ ENGAGEMENT PROPOSALS (3 actions) ━━━
 
 1/3 — REPLY to @VitalikButerin
 📝 "Just shipped a new feature for..."
-Draft: "This is really interesting because..."
+Draft:
+```
+This is really interesting because...
+```
 Reason: High-priority KOL discussing AI agents
 
 2/3 — LIKE @aaboronkov's tweet
@@ -67,7 +74,10 @@ Reason: Relevant to ZION's SHP model, signal boost
 
 3/3 — QUOTE @balaboronkov
 📝 "The future of agent-to-agent..."
-Draft: "We've been building exactly this at ZION..."
+Draft:
+```
+We've been building exactly this at ZION...
+```
 Reason: Direct alignment with ZION mission
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -78,7 +88,7 @@ Reply with:
 • "reject 2" — skip selected
 • "edit 1: new text here" — modify and approve
 • "reject all" — skip everything
-```
+````
 
 
 ### Approval Commands

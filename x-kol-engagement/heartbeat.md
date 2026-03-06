@@ -367,10 +367,12 @@ For each prioritized tweet, draft a structured engagement proposal.
 🎭 MODE:        🤓 Deep Tech
 
 💬 DRAFT REPLY:
-"This is a great step for UX in crypto. Account
+```
+This is a great step for UX in crypto. Account
 abstraction is exactly the kind of infra that makes
 autonomous agents viable on-chain. We're building
-similar composability into ZION's agent identity layer."
+similar composability into ZION's agent identity layer.
+```
 
 📝 REASON:
 High-priority KOL discussing account abstraction,
@@ -419,17 +421,26 @@ STATUS → AWAITING_APPROVAL
    }
    ```
 
-2. **Send to human** via `message_tool`:
-   ```
+2. **Send to human** via `message_tool` (draft text in code blocks for one-tap copy in TG):
+   ````
    🐦 X KOL Engagement — 4 proposals ready
 
-   1. REPLY @VitalikButerin — "AA is the unlock, but the next..."
+   1. REPLY @VitalikButerin
+   ```
+   AA is the unlock, but the next step is...
+   ```
+
    2. LIKE @VitalikButerin — same thread
-   3. QUOTE @aeyakovenko — "The real question is..."
+
+   3. QUOTE @aeyakovenko
+   ```
+   The real question is...
+   ```
+
    4. LIKE @balaboronkov — agent economics thread
 
    Reply: approve all / approve 1,3 / reject all / edit 1: [text] / skip
-   ```
+   ````
 
 3. **Set status back to `IDLE`** — do NOT block on human response.
 
