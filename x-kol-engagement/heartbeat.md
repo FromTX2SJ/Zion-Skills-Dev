@@ -277,8 +277,9 @@ Build batched search queries from the watchlist.
 
 **Rules:**
 - Max ~25 handles per query (due to 512-char query limit on Basic tier)
-- If watchlist has > 25 users, split into multiple queries
-- Sort by handle length to pack queries efficiently
+- If watchlist has > 25 users, split into multiple batched queries
+- **Sort watchlist by `priority` first** (high → medium → low), so the first batch always contains the most important KOLs. Within the same priority, sort by handle length to pack queries efficiently.
+- ⚠️ **MUST execute ALL batched queries to cover the ENTIRE watchlist.** Do NOT stop after the first batch. Every KOL in the watchlist must be polled every cycle.
 
 **API call:**
 

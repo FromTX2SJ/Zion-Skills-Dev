@@ -274,6 +274,8 @@ xurl "/2/tweets/search/recent?query=(from:user1 OR from:user2 OR from:user3) -is
 - Max query length: 512 characters (Basic) / 1024 characters (Pro)
 - Batch up to ~25 handles per query (depends on handle length)
 - If watchlist > 25 users, split into multiple batched queries
+- **Sort watchlist by `priority` first** (high → medium → low), so the first batch always contains the most important KOLs. Within the same priority, sort by handle length to pack queries efficiently.
+- ⚠️ **MUST execute ALL batched queries to cover the ENTIRE watchlist.** Do NOT stop after the first batch. Every KOL in the watchlist must be polled every cycle.
 - Use `-is:reply -is:retweet` to get only original tweets (reduces noise)
 - To also capture retweets of interest, run a separate query without the filter
 
