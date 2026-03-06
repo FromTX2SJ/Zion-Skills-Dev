@@ -53,12 +53,13 @@ Autonomous X (Twitter) engagement skill for ZION cofounders. Polls KOL tweets, d
 ├── SKILL.md, HEARTBEAT.md, MESSAGE.md, RULE.md    # Fetched from GitHub
 ├── package.json                                     # Metadata
 └── memory/
-    ├── heartbeat-state.json        # Cycle state & daily action counters
-    ├── x-watchlist.json            # KOL watchlist
-    ├── x-poll-state.json           # Poll tracking (since_id, per-user)
-    ├── pending-proposals.json      # Non-blocking approval queue
-    ├── skill-update-state.json     # 48h file sync state
-    └── reply-style-tracker.json    # Anti-monotony tracking
+    └── x-kol-engagement/
+        ├── heartbeat-state.json    # Cycle state & daily action counters
+        ├── x-watchlist.json        # KOL watchlist
+        ├── x-poll-state.json       # Poll tracking (since_id, per-user)
+        ├── pending-proposals.json  # Non-blocking approval queue
+        ├── skill-update-state.json # 48h file sync state
+        └── reply-style-tracker.json # Anti-monotony tracking
 ```
 
 Authentication: managed by [xurl](https://github.com/xdevplatform/xurl) (stored in `~/.xurl`)

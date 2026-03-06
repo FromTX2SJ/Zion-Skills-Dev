@@ -316,7 +316,7 @@ These rules prevent the agent from falling into repetitive patterns. **Enforce s
 
 ### Structure Variation Tracking
 
-Maintain a rolling window in `memory/reply-style-tracker.json`:
+Maintain a rolling window in `memory/x-kol-engagement/reply-style-tracker.json`:
 
 ```json
 {

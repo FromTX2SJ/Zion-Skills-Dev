@@ -13,7 +13,7 @@ quiet_hours:
 
 description: Poll X API for new KOL tweets, draft engagement proposals, execute approved actions. Also runs 48h skill file sync.
 
-state_file: memory/heartbeat-state.json
+state_file: memory/x-kol-engagement/heartbeat-state.json
 
 source_url: https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md
 
@@ -33,15 +33,9 @@ source_url: https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-k
 **Purpose:** Fetch new tweets from watched KOLs, draft engagement proposals, push to human via `message_tool` for approval, execute approved actions. Also runs 48h skill file sync.
 
 
-## 📂 Local Storage Root
+## 📂 State Files
 
-All `memory/` paths in this file are relative to:
-
-```
-~/.openclaw/skills/zion-skills-dev/x-kol-engagement/
-```
-
-If a state file doesn't exist on first access, create it with the default schema shown in its section below.
+All state files for this skill are stored under `memory/x-kol-engagement/` (context memory). If a state file doesn't exist on first access, create it with the default schema shown in its section below.
 
 Authentication is managed by xurl (stored in `~/.xurl`). No separate credentials file needed.
 
@@ -103,7 +97,7 @@ Reply: approve all / approve 1,3 / reject all / skip
 ## Heartbeat State
 
 
-### State File: `memory/heartbeat-state.json`
+### State File: `memory/x-kol-engagement/heartbeat-state.json`
 
 ```json
 {
@@ -155,7 +149,7 @@ STATUS → SYNCING
 
 **Purpose:** Keep local skill files up-to-date by fetching from GitHub and detecting changes.
 
-**State file:** `memory/skill-update-state.json`
+**State file:** `memory/x-kol-engagement/skill-update-state.json`
 
 ```json
 {
@@ -256,12 +250,12 @@ STATUS → POLLING
 ```
 
 1. **Run 48h skill sync if due:**
-   - Check `memory/skill-update-state.json` — if sync is due, run Skill File Auto-Sync (see above)
-2. **Check pending proposals** — load `memory/pending-proposals.json`. If there are any with `status: "approved"`, execute them first (jump to Step 5).
-3. **Load watchlist** from `memory/x-watchlist.json`
+   - Check `memory/x-kol-engagement/skill-update-state.json` — if sync is due, run Skill File Auto-Sync (see above)
+2. **Check pending proposals** — load `memory/x-kol-engagement/pending-proposals.json`. If there are any with `status: "approved"`, execute them first (jump to Step 5).
+3. **Load watchlist** from `memory/x-kol-engagement/x-watchlist.json`
    - If watchlist is empty → log "Watchlist empty. Ask human to add KOLs." → set status `IDLE` → END
-4. **Load poll state** from `memory/x-poll-state.json`
-5. **Load heartbeat state** from `memory/heartbeat-state.json`
+4. **Load poll state** from `memory/x-kol-engagement/x-poll-state.json`
+5. **Load heartbeat state** from `memory/x-kol-engagement/heartbeat-state.json`
 6. **Check date rollover** — if `today` ≠ current date, reset `actions_today` counters to 0
 7. **Check daily rate limits** — if any counter is at daily cap (see RULE.md), skip those action types this cycle
 8. **Check consecutive errors** — if ≥ 3, double the interval (backoff). Log warning.
@@ -303,7 +297,7 @@ xurl "/2/tweets/search/recent?query=(from:handle1 OR from:handle2 ...) -is:reply
 **On success:**
 - Collect all tweets into a unified list
 - Map each tweet's `author_id` back to the watchlist entry (handle, tags, priority, notes)
-- Update `memory/x-poll-state.json`:
+- Update `memory/x-kol-engagement/x-poll-state.json`:
   - Set `global_since_id` to `meta.newest_id` (highest tweet ID across all batches)
   - Update `per_user_latest` for each author
   - Increment `poll_count_today`
@@ -346,7 +340,7 @@ If tweets were found, score and rank them:
 For each prioritized tweet, draft a structured engagement proposal.
 
 **Before drafting each reply:**
-1. Load `memory/reply-style-tracker.json` (see MESSAGE.md Anti-Monotony Rules)
+1. Load `memory/x-kol-engagement/reply-style-tracker.json` (see MESSAGE.md Anti-Monotony Rules)
 2. Pick a personality mode different from the last reply
 3. Pick an opener category different from the last reply
 4. Check `zion_mention_cooldown` — if > 0, do NOT mention ZION
@@ -401,7 +395,7 @@ STATUS → AWAITING_APPROVAL
 
 **This step is NON-BLOCKING.** The agent does NOT wait for human response before continuing to the next poll cycle.
 
-1. **Save proposals** to `memory/pending-proposals.json`:
+1. **Save proposals** to `memory/x-kol-engagement/pending-proposals.json`:
    ```json
    {
      "proposals": [
@@ -492,7 +486,7 @@ xurl -X POST /2/tweets -d '{"text":"APPROVED_REPLY_TEXT","reply":{"in_reply_to_t
 **After each action:**
 - Log success/failure
 - Update `actions_today` counters in heartbeat state
-- Update `memory/reply-style-tracker.json` with the mode, opener, and length used
+- Update `memory/x-kol-engagement/reply-style-tracker.json` with the mode, opener, and length used
 - Mark proposal as `executed` in `pending-proposals.json`
 - If any action fails with rate limit (429), stop execution and log remaining actions for next cycle
 

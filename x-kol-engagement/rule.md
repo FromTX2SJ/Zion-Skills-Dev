@@ -138,7 +138,7 @@ Enforced per heartbeat poll cycle (default: 60 min).
 
 ### Daily Caps
 
-Reset at 00:00 UTC. Tracked in `memory/heartbeat-state.json`.
+Reset at 00:00 UTC. Tracked in `memory/x-kol-engagement/heartbeat-state.json`.
 
 | Action | Max Per Day |
 |--------|:----------:|
@@ -157,7 +157,7 @@ Reset at 00:00 UTC. Tracked in `memory/heartbeat-state.json`.
 - **If daily cap is hit**, inform the human: "Daily reply limit reached (20/20). Skipping reply proposals until tomorrow."
 - **Never exceed caps**, even if the human explicitly asks — explain the rate limit risk:
   > "X API rate limits are strict. Exceeding them risks account suspension. I'll queue this for tomorrow."
-- Track all executed actions in `memory/heartbeat-state.json` under `actions_today`
+- Track all executed actions in `memory/x-kol-engagement/heartbeat-state.json` under `actions_today`
 
 
 ### X API Platform Rate Limits (Reference)

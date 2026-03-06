@@ -69,7 +69,7 @@ After reading this skill, complete these tasks in order:
 **Install locally:**
 
 ```bash
-mkdir -p ~/.openclaw/skills/zion-skills-dev/x-kol-engagement/memory
+mkdir -p ~/.openclaw/skills/zion-skills-dev/x-kol-engagement/memory/x-kol-engagement
 curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/skill.md > ~/.openclaw/skills/zion-skills-dev/x-kol-engagement/SKILL.md
 curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md > ~/.openclaw/skills/zion-skills-dev/x-kol-engagement/HEARTBEAT.md
 curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/message.md > ~/.openclaw/skills/zion-skills-dev/x-kol-engagement/MESSAGE.md
@@ -115,9 +115,7 @@ Use the returned `name`, `description`, and `pinned_tweet_id` to calibrate your 
 ## Local Storage
 
 
-All skill files and state are stored under `~/.openclaw/skills/zion-skills-dev/x-kol-engagement/`.
-
-> **All `memory/` paths in this skill are relative to this root.** If a file doesn't exist on first access, create it with the default schema shown in the relevant section.
+All skill files are stored under `~/.openclaw/skills/zion-skills-dev/x-kol-engagement/`. State files are stored under `memory/x-kol-engagement/` (context memory). If a state file doesn't exist on first access, create it with the default schema shown in the relevant section.
 
 ```
 ~/.openclaw/skills/zion-skills-dev/x-kol-engagement/
@@ -127,12 +125,13 @@ All skill files and state are stored under `~/.openclaw/skills/zion-skills-dev/x
 ├── RULE.md                           # Governance rules (fetched remotely)
 ├── package.json                      # Metadata
 └── memory/
-    ├── heartbeat-state.json          # Heartbeat cycle state
-    ├── x-watchlist.json              # KOL watchlist
-    ├── x-poll-state.json             # Poll tracking state
-    ├── pending-proposals.json        # Non-blocking approval queue
-    ├── skill-update-state.json       # 48h skill file sync state
-    └── reply-style-tracker.json      # Anti-monotony tracking (see MESSAGE.md)
+    └── x-kol-engagement/
+        ├── heartbeat-state.json      # Heartbeat cycle state
+        ├── x-watchlist.json          # KOL watchlist
+        ├── x-poll-state.json         # Poll tracking state
+        ├── pending-proposals.json    # Non-blocking approval queue
+        ├── skill-update-state.json   # 48h skill file sync state
+        └── reply-style-tracker.json  # Anti-monotony tracking (see MESSAGE.md)
 ```
 
 > **Authentication** is managed entirely by xurl (stored in `~/.xurl`). No separate credentials file needed.
@@ -147,7 +146,7 @@ All skill files and state are stored under `~/.openclaw/skills/zion-skills-dev/x
 The watchlist is a persistent JSON file tracking which KOL accounts to monitor.
 
 
-### State File: `memory/x-watchlist.json`
+### State File: `memory/x-kol-engagement/x-watchlist.json`
 
 ```json
 {
@@ -196,7 +195,7 @@ When a user is added to the watchlist, the agent **automatically follows them** 
 
 **On `add @handle`:**
 1. Resolve `user_id` via `GET /2/users/by`
-2. Add to `memory/x-watchlist.json`
+2. Add to `memory/x-kol-engagement/x-watchlist.json`
 3. **Auto-follow** via `POST /2/users/:agent_user_id/following` with `target_user_id`
 4. Log: `✅ Added @handle to watchlist and followed`
 5. If follow fails (already following, rate limit, etc.) — log warning but still add to watchlist
@@ -411,7 +410,7 @@ xurl returns raw JSON from the X API. Parse the response to check for success or
 ## Poll State Management
 
 
-### State File: `memory/x-poll-state.json`
+### State File: `memory/x-kol-engagement/x-poll-state.json`
 
 ```json
 {
@@ -499,7 +498,7 @@ After reading this skill file, you **MUST** register a heartbeat task by appendi
 ## X KOL Engagement (every 60 minutes)
 If 60 minutes since last X KOL engagement check:
 1. Fetch https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md and follow it
-2. Update lastXKolEngagementCheck timestamp in memory/heartbeat-state.json
+2. Update lastXKolEngagementCheck timestamp in memory/x-kol-engagement/heartbeat-state.json
 ```
 
 **Write that block to the file now.** If `~/.openclaw/workspace/HEARTBEAT.md` doesn't exist, create it. If it already exists, append the block (don't duplicate if already present).
@@ -510,7 +509,7 @@ If 60 minutes since last X KOL engagement check:
 1. Your agent loop reads `~/.openclaw/workspace/HEARTBEAT.md` to discover all registered periodic tasks
 2. For this task, it fetches the **remote** `heartbeat.md` from GitHub to get the latest execution logic
 3. It follows the instructions in the fetched heartbeat.md (poll, triage, draft, approve, execute)
-4. It updates the timestamp in `memory/heartbeat-state.json`
+4. It updates the timestamp in `memory/x-kol-engagement/heartbeat-state.json`
 
 **The local entry is a task registration. The remote URL contains the actual logic.** Always fetch the remote URL on every cycle — never hardcode the execution logic locally. This way, updates to the heartbeat routine take effect immediately without reinstalling.
 
