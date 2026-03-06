@@ -126,9 +126,8 @@ All skill files are stored under `~/.openclaw/skills/zion-skills-dev/x-kol-engag
 ├── package.json                      # Metadata
 └── memory/
     └── x-kol-engagement/
-        ├── heartbeat-state.json      # Heartbeat cycle state
+        ├── heartbeat-state.json      # Heartbeat cycle state + poll tracking (since_id, per-user)
         ├── x-watchlist.json          # KOL watchlist
-        ├── x-poll-state.json         # Poll tracking state
         ├── pending-proposals.json    # Non-blocking approval queue
         ├── skill-update-state.json   # 48h skill file sync state
         └── reply-style-tracker.json  # Anti-monotony tracking (see MESSAGE.md)
@@ -411,34 +410,17 @@ xurl returns raw JSON from the X API. Parse the response to check for success or
 
 ## Poll State Management
 
+Poll tracking state is stored inside the `poll` sub-object of `memory/x-kol-engagement/heartbeat-state.json` (not a separate file). See the [Heartbeat State](#heartbeat-state) section in HEARTBEAT.md for the full schema.
 
-### State File: `memory/x-kol-engagement/x-poll-state.json`
-
-```json
-{
-  "last_poll_at": "2025-03-01T15:30:00.000Z",
-  "global_since_id": "1234567895",
-  "per_user_latest": {
-    "295218901": {
-      "handle": "VitalikButerin",
-      "latest_tweet_id": "1234567895",
-      "latest_tweet_at": "2025-03-01T15:30:00.000Z"
-    }
-  },
-  "poll_count_today": 12,
-  "poll_date": "2025-03-01",
-  "errors": []
-}
-```
+**Key fields (all under `heartbeat-state.json → poll`):**
 
 | Field | Description |
 |-------|-------------|
-| `last_poll_at` | Timestamp of last successful poll |
-| `global_since_id` | The highest tweet ID seen across all users — used as `since_id` in next search |
-| `per_user_latest` | Per-user tracking for reporting and debugging |
-| `poll_count_today` | Number of polls executed today (for rate awareness) |
-| `poll_date` | Date for resetting `poll_count_today` |
-| `errors` | Last N errors for debugging |
+| `poll.last_poll_at` | Timestamp of last successful poll |
+| `poll.global_since_id` | Highest tweet ID seen across all users — used as `since_id` in next search |
+| `poll.per_user_latest` | Per-user tracking: `{ "user_id": { handle, latest_tweet_id, latest_tweet_at } }` |
+| `poll.poll_count_today` | Number of polls executed today (reset when top-level `today` changes) |
+| `poll.errors` | Last 5 poll errors for debugging |
 
 
 ### Incremental Fetching Strategy

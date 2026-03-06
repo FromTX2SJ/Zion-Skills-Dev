@@ -116,6 +116,13 @@ Reply: approve all / approve 1,3 / reject all / skip
     "follows": 0,
     "bookmarks": 0,
     "original_posts": 0
+  },
+  "poll": {
+    "last_poll_at": null,
+    "global_since_id": null,
+    "per_user_latest": {},
+    "poll_count_today": 0,
+    "errors": []
   }
 }
 ```
@@ -128,8 +135,13 @@ Reply: approve all / approve 1,3 / reject all / skip
 | `last_result` | Summary of last cycle: `{ tweets_found, proposals_drafted, actions_executed }` |
 | `consecutive_errors` | Error counter — back off after 3 consecutive errors |
 | `cycle_count` | Total cycles since agent started |
-| `today` | Current date string — reset `actions_today` when date changes |
+| `today` | Current date string — reset `actions_today` and `poll.poll_count_today` when date changes |
 | `actions_today` | Running daily totals for rate limit enforcement (see RULE.md) |
+| `poll.last_poll_at` | Timestamp of last successful tweet poll |
+| `poll.global_since_id` | Highest tweet ID seen across all users — used as `since_id` in next search query |
+| `poll.per_user_latest` | Per-user tracking: `{ "user_id": { handle, latest_tweet_id, latest_tweet_at } }` |
+| `poll.poll_count_today` | Number of polls executed today (reset when `today` changes) |
+| `poll.errors` | Last 5 poll errors for debugging |
 
 
 ---
@@ -254,12 +266,11 @@ STATUS → POLLING
 2. **Check pending proposals** — load `memory/x-kol-engagement/pending-proposals.json`. If there are any with `status: "approved"`, execute them first (jump to Step 5).
 3. **Load watchlist** from `memory/x-kol-engagement/x-watchlist.json`
    - If watchlist is empty → log "Watchlist empty. Ask human to add KOLs." → set status `IDLE` → END
-4. **Load poll state** from `memory/x-kol-engagement/x-poll-state.json`
-5. **Load heartbeat state** from `memory/x-kol-engagement/heartbeat-state.json`
-6. **Check date rollover** — if `today` ≠ current date, reset `actions_today` counters to 0
-7. **Check daily rate limits** — if any counter is at daily cap (see RULE.md), skip those action types this cycle
-8. **Check consecutive errors** — if ≥ 3, double the interval (backoff). Log warning.
-9. **Check quiet hours** — determine current time in `America/Los_Angeles` (US Pacific):
+4. **Load heartbeat state** from `memory/x-kol-engagement/heartbeat-state.json` (includes poll tracking in the `poll` sub-object)
+5. **Check date rollover** — if `today` ≠ current date, reset `actions_today` counters and `poll.poll_count_today` to 0
+6. **Check daily rate limits** — if any counter is at daily cap (see RULE.md), skip those action types this cycle
+7. **Check consecutive errors** — if ≥ 3, double the interval (backoff). Log warning.
+8. **Check quiet hours** — determine current time in `America/Los_Angeles` (US Pacific):
    - If between **00:00–07:00 PT**: use `quiet_hours.interval` = **180 minutes** (every 3 hours). Poll only, skip drafting proposals (human is likely asleep). Bookmark high-priority tweets for later.
    - Otherwise: use default `interval` = **60 minutes**
    - Log: "🌙 Quiet hours active — polling every 180 min" or "☀️ Normal hours — polling every 60 min"
@@ -298,15 +309,15 @@ xurl "/2/tweets/search/recent?query=(from:handle1 OR from:handle2 ...) -is:reply
 **On success:**
 - Collect all tweets into a unified list
 - Map each tweet's `author_id` back to the watchlist entry (handle, tags, priority, notes)
-- Update `memory/x-kol-engagement/x-poll-state.json`:
-  - Set `global_since_id` to `meta.newest_id` (highest tweet ID across all batches)
-  - Update `per_user_latest` for each author
-  - Increment `poll_count_today`
-  - Set `last_poll_at` to now
+- Update the `poll` sub-object in `memory/x-kol-engagement/heartbeat-state.json`:
+  - Set `poll.global_since_id` to `meta.newest_id` (highest tweet ID across all batches)
+  - Update `poll.per_user_latest` for each author
+  - Increment `poll.poll_count_today`
+  - Set `poll.last_poll_at` to now
 
 **On error:**
-- Log error to `poll_state.errors[]` (keep last 5)
-- Increment `consecutive_errors`
+- Append error to `poll.errors[]` in `memory/x-kol-engagement/heartbeat-state.json` (keep last 5)
+- Increment `consecutive_errors` (top-level field in same file)
 - Set status `ERROR` → END (will retry next cycle)
 
 
