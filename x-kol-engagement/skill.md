@@ -127,7 +127,9 @@ X_AGENT_USER_ID=          # Your X user ID (numeric) — for self-filtering
 ## Local Storage
 
 
-All skill files and state are stored under `~/.openclaw/skills/zion-skills-dev/x-kol-engagement/`:
+All skill files and state are stored under `~/.openclaw/skills/zion-skills-dev/x-kol-engagement/`.
+
+> **All `memory/` paths in this skill are relative to this root.** If a file doesn't exist on first access, create it with the default schema shown in the relevant section.
 
 ```
 ~/.openclaw/skills/zion-skills-dev/x-kol-engagement/
@@ -141,8 +143,7 @@ All skill files and state are stored under `~/.openclaw/skills/zion-skills-dev/x
     ├── x-watchlist.json              # KOL watchlist
     ├── x-poll-state.json             # Poll tracking state
     ├── pending-proposals.json        # Non-blocking approval queue
-    ├── skill-update-state.json       # 24h skill file sync state
-    ├── trend-state.json              # 24h trend analysis state
+    ├── skill-update-state.json       # 48h skill file sync state
     └── reply-style-tracker.json      # Anti-monotony tracking (see MESSAGE.md)
 ```
 

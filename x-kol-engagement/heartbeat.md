@@ -11,7 +11,7 @@ quiet_hours:
   end: "07:00"
   interval: 180
 
-description: Poll X API for new KOL tweets, draft engagement proposals, execute approved actions. Also runs 24h cycles for skill file sync and trend analysis.
+description: Poll X API for new KOL tweets, draft engagement proposals, execute approved actions. Also runs 48h skill file sync.
 
 state_file: memory/heartbeat-state.json
 
@@ -30,14 +30,27 @@ source_url: https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-k
 
 **Cycle:** Every 60 minutes (180 minutes during quiet hours 00:00–07:00 PT)
 
-**Purpose:** Fetch new tweets from watched KOLs, draft engagement proposals, push to human via `message_tool` for approval, execute approved actions. Also runs daily cycles for skill file updates and trend analysis.
+**Purpose:** Fetch new tweets from watched KOLs, draft engagement proposals, push to human via `message_tool` for approval, execute approved actions. Also runs 48h skill file sync.
+
+
+## 📂 Local Storage Root
+
+All `memory/` paths in this file are relative to:
+
+```
+~/.openclaw/skills/zion-skills-dev/x-kol-engagement/
+```
+
+If a state file doesn't exist on first access, create it with the default schema shown in its section below.
+
+Credentials are stored separately at: `~/.config/zion-skills-dev/credentials.json`
 
 
 ## 🎯 What To Do Each Cycle
 
 Every heartbeat cycle, execute these tasks in order:
 
-1. **Check 24h tasks** — If due: sync skill files from GitHub + run trend analysis → [24-Hour Cycles](#24-hour-cycles)
+1. **Check 48h tasks** — If due: sync skill files from GitHub → [48-Hour Cycles](#48-hour-cycles)
 2. **Execute pending approvals** — Check `pending-proposals.json` for approved/expired proposals → [Step 0](#step-0--pre-flight-checks)
 3. **Poll for new tweets** — Fetch latest tweets from watched KOLs → [Step 1](#step-1--fetch-new-tweets)
 4. **Triage & prioritize** — Score tweets by relevance, priority, metrics → [Step 2](#step-2--triage--prioritize)
@@ -61,7 +74,6 @@ The agent **MUST** proactively push proposals, alerts, and summaries to the huma
 | Event | Send? | Priority |
 |-------|:-----:|----------|
 | Engagement proposals ready | ✅ YES | Normal |
-| Trend-based post proposal | ✅ YES | Normal |
 | Skill files updated (diff detected) | ✅ YES | Low |
 | API auth error (401/403) | ✅ YES | 🔴 Urgent |
 | Rate limit hit (429) | ✅ YES | ⚠️ Warning |
@@ -116,7 +128,7 @@ Reply: approve all / approve 1,3 / reject all / skip
 
 | Field | Description |
 |-------|-------------|
-| `status` | `IDLE`, `POLLING`, `DRAFTING`, `AWAITING_APPROVAL`, `EXECUTING`, `SYNCING`, `TRENDING`, `ERROR` |
+| `status` | `IDLE`, `POLLING`, `DRAFTING`, `AWAITING_APPROVAL`, `EXECUTING`, `SYNCING`, `ERROR` |
 | `last_run_at` | ISO 8601 timestamp of last completed cycle |
 | `next_run_at` | ISO 8601 timestamp of next scheduled cycle |
 | `last_result` | Summary of last cycle: `{ tweets_found, proposals_drafted, actions_executed }` |
@@ -129,13 +141,13 @@ Reply: approve all / approve 1,3 / reject all / skip
 ---
 
 
-## 24-Hour Cycles
+## 48-Hour Cycles
 
 
-Two maintenance tasks run every 24 hours, checked at the start of each heartbeat cycle.
+Checked at the start of each heartbeat cycle.
 
 
-### Skill File Auto-Sync (Every 24 Hours)
+### Skill File Auto-Sync (Every 48 Hours)
 
 ```
 STATUS → SYNCING
@@ -196,7 +208,7 @@ STATUS → SYNCING
 2. **Fetch each file** from its GitHub raw URL.
 3. **Compute SHA-256 hash** of fetched content.
 4. **Compare** with stored `sha256` for each file.
-5. **If no changes** — update `last_check_at`, set `next_check_at` = now + 24h. Done.
+5. **If no changes** — update `last_check_at`, set `next_check_at` = now + 48h. Done.
 6. **If changes detected:**
    a. For each changed file, generate a human-readable diff summary (what sections changed, what's new/removed).
    b. Overwrite the local file with the fetched version.
@@ -226,116 +238,9 @@ STATUS → SYNCING
       Changes applied automatically. Review at:
       https://github.com/FromTX2SJ/Zion-Skills-Dev/commits/main
       ```
-7. Set `next_check_at` = now + 24h.
+7. Set `next_check_at` = now + 48h.
 
 **Keep `update_history` to last 20 entries** to avoid unbounded growth.
-
-
-### Trend Analysis (Every 24 Hours)
-
-```
-STATUS → TRENDING
-```
-
-**Purpose:** Analyze trending topics globally and in key regions, propose an original post connecting trends to ZION's mission.
-
-**State file:** `memory/trend-state.json`
-
-```json
-{
-  "last_check_at": "2025-03-01T12:00:00Z",
-  "next_check_at": "2025-03-02T12:00:00Z",
-  "last_trends": {
-    "global": [],
-    "us": [],
-    "singapore": [],
-    "uae": []
-  },
-  "post_history": []
-}
-```
-
-**Trend analysis procedure:**
-
-1. **Check timing** — if `now < next_check_at`, skip this cycle.
-2. **Fetch trends** from X API:
-   ```bash
-   # Global trends
-   curl "https://api.x.com/2/trends/by/woeid/1" \
-     -H "Authorization: Bearer $X_BEARER_TOKEN"
-
-   # United States
-   curl "https://api.x.com/2/trends/by/woeid/23424977" \
-     -H "Authorization: Bearer $X_BEARER_TOKEN"
-
-   # Singapore (crypto/AI hub)
-   curl "https://api.x.com/2/trends/by/woeid/23424948" \
-     -H "Authorization: Bearer $X_BEARER_TOKEN"
-
-   # UAE / Dubai (crypto hub)
-   curl "https://api.x.com/2/trends/by/woeid/23424738" \
-     -H "Authorization: Bearer $X_BEARER_TOKEN"
-   ```
-   
-   **Fallback if v2 Trends unavailable:** Use v1.1 endpoint:
-   ```bash
-   curl "https://api.x.com/1.1/trends/place.json?id=1" \
-     -H "Authorization: Bearer $X_BEARER_TOKEN"
-   ```
-
-3. **Filter for relevance** — scan trends for keywords related to:
-   - AI, agents, autonomous systems, LLM, GPT, Claude
-   - Crypto, DeFi, blockchain, web3, on-chain
-   - Specific protocols/projects in our ecosystem
-   - Identity, privacy, zero-knowledge
-   - Any topic that connects to ZION's thesis
-
-4. **Save trends** to `memory/trend-state.json` under `last_trends`.
-
-5. **Draft an original post proposal** based on the most relevant trend(s):
-
-   ```
-   ━━━ TREND-BASED POST PROPOSAL ━━━
-
-   📊 Today's Relevant Trends:
-   🌍 Global: #AIAgents (120K posts), #DeFi (85K)
-   🇺🇸 US: #autonomousAI (45K), #web3 (32K)
-   🇸🇬 Singapore: #blockchain (28K)
-   🇦🇪 UAE: #cryptoregulation (15K)
-
-   📝 Proposed Original Post:
-   "Everyone's talking about #AIAgents today and most of the
-   conversation is about chatbots. But the real unlock is agents
-   that can hold assets, sign transactions, and coordinate with
-   other agents autonomously.
-
-   The chat interface is a stepping stone. The endgame is agents
-   that don't need a human in the loop at all."
-
-   🎭 Mode: 🔥 Spicy
-   💡 Reason: #AIAgents trending globally — opportunity to
-   differentiate ZION's thesis on true agent autonomy vs chatbot
-   wrappers.
-
-   Approve? Reply "approve" / "edit: new text" / "skip"
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   ```
-
-6. **Send proposal** to human via `message_tool` and save to pending proposals (see below).
-7. Append to `post_history` (keep last 30 entries):
-   ```json
-   {
-     "at": "2025-03-02T12:00:00Z",
-     "trends_used": ["#AIAgents", "#DeFi"],
-     "regions": ["global", "us"],
-     "proposed_text": "...",
-     "status": "pending",
-     "tweet_id": null
-   }
-   ```
-8. Set `next_check_at` = now + 24h.
-
-**Voice for trend posts:** Follow the **Original Post Guidelines** in `MESSAGE.md`. Use the personality mode that best matches the trend's energy. Don't just restate the trend — add your unique angle.
 
 
 ---
@@ -350,9 +255,8 @@ STATUS → TRENDING
 STATUS → POLLING
 ```
 
-1. **Run 24h cycles if due:**
+1. **Run 48h skill sync if due:**
    - Check `memory/skill-update-state.json` — if sync is due, run Skill File Auto-Sync (see above)
-   - Check `memory/trend-state.json` — if trend analysis is due, run Trend Analysis (see above)
 2. **Check pending proposals** — load `memory/pending-proposals.json`. If there are any with `status: "approved"`, execute them first (jump to Step 5).
 3. **Load watchlist** from `memory/x-watchlist.json`
    - If watchlist is empty → log "Watchlist empty. Ask human to add KOLs." → set status `IDLE` → END
@@ -568,7 +472,7 @@ For each approved proposal, execute in this order:
 4. **Quote tweets** (highest visibility)
 5. **Retweets** (amplification)
 6. **Follows** (relationship building)
-7. **Original posts** (trend-based or otherwise)
+7. **Original posts**
 
 **Execution template (Reply example):**
 
@@ -696,9 +600,8 @@ After each cycle completes, log a summary:
 ║  👥 Follows:   2/5                  ║
 ║  📢 Posts:     1/5                  ║
 ╠══════════════════════════════════════╣
-║  24h Cycles                         ║
+║  48h Cycles                         ║
 ║  🔄 Skill Sync:  ✅ Up to date     ║
-║  📊 Trends:      Next in 18h       ║
 ╚══════════════════════════════════════╝
 ```
 

@@ -39,8 +39,7 @@ Autonomous X (Twitter) engagement skill for ZION cofounders. Polls KOL tweets, d
 | **Non-Blocking Approval** | Proposals pushed to human via `message_tool`, saved to pending queue — agent doesn't block waiting |
 | **5 Personality Modes** | 🔥 Spicy, 🤓 Deep Tech, 😄 Casual, 🧵 Story, 🤔 Philosophical — rotated per reply |
 | **Anti-Monotony Rules** | Tracks last 5 openers, modes, lengths — enforces variety, prevents template-robot behavior |
-| **24h Skill File Sync** | Fetches all skill files from GitHub daily, detects diffs via SHA-256, auto-reloads agent memory |
-| **24h Trend Analysis** | Fetches trending topics (Global, US, Singapore, UAE), proposes original posts connecting trends to ZION |
+| **48h Skill File Sync** | Fetches all skill files from GitHub every 48 hours, detects diffs via SHA-256, auto-reloads agent memory |
 | **Watchlist Auto-Follow** | Adding a KOL to watchlist auto-follows them (implied intent) |
 | **RT/Quote Fallback** | If retweet or quote tweet fails → posts as `{content} @handle {tweet_link}` instead |
 | **Quiet Hours** | 00:00–07:00 PT: poll-only mode, no proposals, bookmark high-priority tweets for later |
@@ -58,8 +57,7 @@ Autonomous X (Twitter) engagement skill for ZION cofounders. Polls KOL tweets, d
     ├── x-watchlist.json            # KOL watchlist
     ├── x-poll-state.json           # Poll tracking (since_id, per-user)
     ├── pending-proposals.json      # Non-blocking approval queue
-    ├── skill-update-state.json     # 24h file sync state
-    ├── trend-state.json            # 24h trend analysis state
+    ├── skill-update-state.json     # 48h file sync state
     └── reply-style-tracker.json    # Anti-monotony tracking
 ```
 
@@ -70,7 +68,7 @@ Credentials: `~/.config/zion-skills-dev/credentials.json`
 
 1. Agent reads [`skill.md`](x-kol-engagement/skill.md) and follows the **🎯 What You Need To Do** task list
 2. Sets up X API credentials (Bearer Token + OAuth 1.0a)
-3. Fetches own X profile via `GET /2/users/me`
+3. Fetches own X profile via `GET /2/users/$X_AGENT_USER_ID`
 4. Asks human for initial KOL watchlist → auto-follows each
 5. Registers heartbeat task in `~/.openclaw/workspace/HEARTBEAT.md`
 6. Every 60 min: fetches [`heartbeat.md`](x-kol-engagement/heartbeat.md) from GitHub and executes it
