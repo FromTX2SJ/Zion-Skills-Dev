@@ -2,29 +2,102 @@
 
 ZION agent skill definitions — fetched remotely by agents on every heartbeat cycle.
 
+**Repository:** [github.com/FromTX2SJ/Zion-Skills-Dev](https://github.com/FromTX2SJ/Zion-Skills-Dev)
+
 
 ## Skills
 
 | Skill | Description | Entry Point |
 |-------|-------------|-------------|
-| **x-kol-engagement** | Monitor crypto KOLs on X, draft engagement replies, execute human-approved interactions as a ZION cofounder. | [`skill.md`](x-kol-engagement/skill.md) |
+| 🐦 **x-kol-engagement** | Monitor crypto KOLs on X, draft engagement replies, execute human-approved interactions as a ZION cofounder. | [`skill.md`](x-kol-engagement/skill.md) |
+
+
+---
+
+
+## x-kol-engagement
+
+Autonomous X (Twitter) engagement skill for ZION cofounders. Polls KOL tweets, drafts contextual replies, and executes human-approved actions.
+
+
+### Skill Files
+
+| File | Description |
+|------|-------------|
+| [`skill.md`](x-kol-engagement/skill.md) | Core skill definition — setup, API reference, watchlist management, onboarding task list |
+| [`heartbeat.md`](x-kol-engagement/heartbeat.md) | Heartbeat loop — per-cycle task list, polling, triage, proposals, execution |
+| [`message.md`](x-kol-engagement/message.md) | Voice & persona guide — 5 personality modes, humor, anti-monotony rules |
+| [`rule.md`](x-kol-engagement/rule.md) | Governance — approval workflows, rate limits, safety rails, fallback rules |
+| [`skill.json`](x-kol-engagement/skill.json) | Package metadata |
+
+
+### Features
+
+| Feature | Description |
+|---------|-------------|
+| **KOL Tweet Polling** | Every 60 min (180 min during quiet hours 00:00–07:00 PT), polls X API for new tweets from watched KOLs |
+| **Non-Blocking Approval** | Proposals pushed to human via `message_tool`, saved to pending queue — agent doesn't block waiting |
+| **5 Personality Modes** | 🔥 Spicy, 🤓 Deep Tech, 😄 Casual, 🧵 Story, 🤔 Philosophical — rotated per reply |
+| **Anti-Monotony Rules** | Tracks last 5 openers, modes, lengths — enforces variety, prevents template-robot behavior |
+| **24h Skill File Sync** | Fetches all skill files from GitHub daily, detects diffs via SHA-256, auto-reloads agent memory |
+| **24h Trend Analysis** | Fetches trending topics (Global, US, Singapore, UAE), proposes original posts connecting trends to ZION |
+| **Watchlist Auto-Follow** | Adding a KOL to watchlist auto-follows them (implied intent) |
+| **RT/Quote Fallback** | If retweet or quote tweet fails → posts as `{content} @handle {tweet_link}` instead |
+| **Quiet Hours** | 00:00–07:00 PT: poll-only mode, no proposals, bookmark high-priority tweets for later |
+| **Rate Limits** | Per-cycle and daily caps enforced for all action types (replies, likes, quotes, etc.) |
+
+
+### Local Storage
+
+```
+~/.openclaw/skills/zion-skills-dev/x-kol-engagement/
+├── SKILL.md, HEARTBEAT.md, MESSAGE.md, RULE.md    # Fetched from GitHub
+├── package.json                                     # Metadata
+└── memory/
+    ├── heartbeat-state.json        # Cycle state & daily action counters
+    ├── x-watchlist.json            # KOL watchlist
+    ├── x-poll-state.json           # Poll tracking (since_id, per-user)
+    ├── pending-proposals.json      # Non-blocking approval queue
+    ├── skill-update-state.json     # 24h file sync state
+    ├── trend-state.json            # 24h trend analysis state
+    └── reply-style-tracker.json    # Anti-monotony tracking
+```
+
+Credentials: `~/.config/zion-skills-dev/credentials.json`
+
+
+### Quick Start
+
+1. Agent reads [`skill.md`](x-kol-engagement/skill.md) and follows the **🎯 What You Need To Do** task list
+2. Sets up X API credentials (Bearer Token + OAuth 1.0a)
+3. Fetches own X profile via `GET /2/users/me`
+4. Asks human for initial KOL watchlist → auto-follows each
+5. Registers heartbeat task in `~/.openclaw/workspace/HEARTBEAT.md`
+6. Every 60 min: fetches [`heartbeat.md`](x-kol-engagement/heartbeat.md) from GitHub and executes it
+
+
+---
 
 
 ## How It Works
 
-Each skill is a set of Markdown files that define an agent's behavior:
-
-- **SKILL.md** — Core skill definition, API reference, setup instructions
-- **HEARTBEAT.md** — Periodic task loop (fetched remotely every cycle)
-- **MESSAGE.md** — Voice & persona guide
-- **RULE.md** — Governance rules, rate limits, safety rails
-- **skill.json** — Package metadata
-
-Agents fetch these files from GitHub raw URLs on every heartbeat cycle to always run the latest version:
+Agents fetch skill files from GitHub raw URLs on every heartbeat cycle — **never cache logic locally**:
 
 ```
 https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/{skill-name}/{file}
 ```
+
+This means skill updates take effect immediately on the next cycle without reinstalling.
+
+### File Roles
+
+| File | Role |
+|------|------|
+| **skill.md** | Onboarding + reference — agent reads this once to set up, then periodically to stay current |
+| **heartbeat.md** | Execution loop — fetched and followed every cycle (the "what to do now" file) |
+| **message.md** | Voice guide — personality modes, tone calibration, anti-patterns |
+| **rule.md** | Governance — what's allowed, what's not, rate limits, approval workflows |
+| **skill.json** | Machine-readable metadata |
 
 
 ## License
