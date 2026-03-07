@@ -45,8 +45,8 @@ After reading this skill, complete these tasks in order:
 
 1. **Verify xurl is ready** — Run `xurl auth status` to confirm authentication is configured. If not, ask your human to install and set up xurl first.
 2. **Install skill files locally** — Run the curl commands in [Skill Files](#skill-files) to download all skill files to `~/.openclaw/skills/zion-skills-dev/x-kol-engagement/`.
-3. **Fetch your X profile** — Call `xurl /2/users/me` to understand your persona → [Self-Identity](#self-identity)
-4. **Initialize watchlist** — Ask human for KOL list, resolve user IDs, auto-follow each → [Watchlist Management](#watchlist-management)
+3. **Fetch your X profile** — Run `xurl whoami` to understand your persona → [Self-Identity](#self-identity)
+4. **Initialize watchlist** — Ask human for KOL list, resolve user IDs via `xurl user @handle`, auto-follow via `xurl follow @handle` → [Watchlist Management](#watchlist-management)
 5. **Register heartbeat** — Write task entry to `~/.openclaw/workspace/HEARTBEAT.md` → [Set Up Your Heartbeat](#set-up-your-heartbeat-💓)
 6. **Bootstrap identity** — Based on everything learned above (your X profile, ZION homepage, watchlist), autonomously update your identity, soul, and users information to reflect your persona as a ZION cofounder
 7. **Run first poll cycle** — Fetch HEARTBEAT.md from GitHub and follow it → [HEARTBEAT.md](https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md)
@@ -91,7 +91,7 @@ curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-e
 
 - Project homepage: `https://zion.space`
 - Fetch `https://zion.space` periodically to stay current on ZION's latest state
-- **Fetch your own X profile** periodically via `xurl /2/users/me` to stay current on your account identity, bio, and metrics. Use your profile data (name, bio, pinned tweet) to understand and embody the persona you're representing.
+- **Fetch your own X profile** periodically via `xurl whoami` to stay current on your account identity, bio, and metrics. Use your profile data (name, bio, pinned tweet) to understand and embody the persona you're representing.
 - Your engagement should reflect genuine knowledge of ZION's architecture, mission, and progress
 - You are NOT a marketing bot. You are a builder who engages authentically with the crypto/AI community
 
@@ -101,12 +101,12 @@ curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-e
 Periodically fetch your own profile to stay in character:
 
 ```bash
-xurl "/2/users/me?user.fields=name,username,description,profile_image_url,public_metrics,pinned_tweet_id"
+xurl whoami
 ```
 
 Use the returned `name`, `description`, and `pinned_tweet_id` to calibrate your voice and ensure consistency with your public persona.
 
-> **Important:** The response includes your numeric `id` field. Cache this as your **agent user ID** — you'll need it for the follow endpoint when adding users to the watchlist.
+> **Important:** The response includes your numeric `id` field. Cache this as your **agent user ID**.
 
 
 ---
@@ -191,9 +191,9 @@ Your human manages the watchlist via natural language:
 When a user is added to the watchlist, the agent **automatically follows them**. The rationale: if the human explicitly asks to monitor a KOL, following them is implied intent.
 
 **On `add @handle`:**
-1. Resolve `user_id` via `GET /2/users/by`
+1. Resolve user info via `xurl user @handle` — extract the `id` field from the response
 2. Add to `memory/x-kol-engagement/x-watchlist.json`
-3. **Auto-follow** via `POST /2/users/:agent_user_id/following` with `target_user_id`
+3. **Auto-follow** via `xurl follow @handle`
 4. Log: `✅ Added @handle to watchlist and followed`
 5. If follow fails (already following, rate limit, etc.) — log warning but still add to watchlist
 
@@ -203,14 +203,10 @@ When a user is added to the watchlist, the agent **automatically follows them**.
 When adding a new handle, resolve the numeric `user_id` once and cache it:
 
 ```bash
-xurl "/2/users/by?usernames=VitalikButerin&user.fields=id,name,username,description,public_metrics"
+xurl user @VitalikButerin
 ```
 
-**Batch lookup** — resolve up to 100 usernames in one call:
-
-```bash
-xurl "/2/users/by?usernames=user1,user2,user3&user.fields=id,name,username"
-```
+The response JSON contains `id`, `name`, `username`, `description`, and `public_metrics`. Extract and store the `id`.
 
 ⚠️ **Only call this once per user.** After resolving, store `user_id` in the watchlist. Never re-resolve unless the handle changes.
 
@@ -231,6 +227,8 @@ xurl "/2/users/by?usernames=user1,user2,user3&user.fields=id,name,username"
 ### Search Recent Tweets (Batched — Primary Polling Method)
 
 The core of the polling loop. Search for recent tweets from ALL watched users in a single call.
+
+> **Note:** The `xurl search` shortcut only supports `-n` for result count. Since we need `since_id`, `start_time`, `tweet.fields`, and `expansions` for incremental polling, **use raw API mode** for search:
 
 ```bash
 xurl "/2/tweets/search/recent?query=(from:user1 OR from:user2 OR from:user3) -is:reply -is:retweet&since_id=LAST_SEEN_TWEET_ID&max_results=100&tweet.fields=id,text,author_id,created_at,public_metrics,referenced_tweets,entities,conversation_id&expansions=author_id,referenced_tweets.id&user.fields=name,username"
@@ -259,16 +257,16 @@ xurl "/2/tweets/search/recent?query=(from:user1 OR from:user2 OR from:user3) -is
 ### Lookup Users
 
 ```bash
-xurl "/2/users/by?usernames=VitalikButerin&user.fields=id,name,username,description,public_metrics"
+xurl user @VitalikButerin
 ```
 
-Used for resolving handles to user IDs when adding to watchlist.
+Returns `id`, `name`, `username`, `description`, and `public_metrics`. Used for resolving handles to user IDs when adding to watchlist.
 
 
 ### Fetch Own Profile
 
 ```bash
-xurl "/2/users/me?user.fields=name,username,description,profile_image_url,public_metrics,pinned_tweet_id"
+xurl whoami
 ```
 
 Cache the returned `id` as your agent user ID.
@@ -277,7 +275,7 @@ Cache the returned `id` as your agent user ID.
 ### Follow a User (Watchlist Add Only)
 
 ```bash
-xurl -X POST /2/users/AGENT_USER_ID/following -d '{"target_user_id":"TARGET_USER_ID"}'
+xurl follow @handle
 ```
 
 Only used during watchlist add (auto-follow). Rate limit: 15 requests per 15 minutes.
@@ -307,12 +305,12 @@ For incremental fetching strategy and query construction rules, see HEARTBEAT.md
 ## API Endpoints Used
 
 
-| Endpoint | Purpose |
-|----------|---------|
-| `GET /2/users/me` | Fetch own profile, cache user ID |
-| `GET /2/tweets/search/recent` | Core polling loop — fetch KOL tweets |
-| `GET /2/users/by` | Resolve handles to user IDs (watchlist add) |
-| `POST /2/users/:id/following` | Auto-follow on watchlist add |
+| xurl Command | Endpoint | Purpose |
+|-------------|----------|---------|
+| `xurl whoami` | `GET /2/users/me` | Fetch own profile, cache user ID |
+| `xurl search` (raw API) | `GET /2/tweets/search/recent` | Core polling loop — fetch KOL tweets |
+| `xurl user @handle` | `GET /2/users/by` | Resolve handles to user IDs (watchlist add) |
+| `xurl follow @handle` | `POST /2/users/:id/following` | Auto-follow on watchlist add |
 
 > All endpoints are called via `xurl`. Auth is handled automatically by xurl.
 >
