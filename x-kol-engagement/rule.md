@@ -102,14 +102,75 @@ Before finalizing any draft, verify:
 
 ## 3. Proposal Format
 
-> **Draft text MUST be wrapped in a code block (triple backticks) so the human can one-tap copy it.** Every proposal MUST include a direct link to the original tweet (`https://x.com/{handle}/status/{tweet_id}`).
+> ⚠️ **This is the canonical proposal format.** All proposals MUST use this EXACT template. Do NOT simplify, abbreviate, or omit fields. HEARTBEAT.md references this section — this is the single source of truth.
 
-Use the **standard proposal format** defined in **HEARTBEAT.md Step 3**. Key rules:
+**Draft text MUST be wrapped in a code block (triple backticks) so the human can one-tap copy it.** Every proposal MUST include a direct link to the original tweet (`https://x.com/{handle}/status/{tweet_id}`).
 
-- Each proposal has: `📋 PROPOSAL #N — @handle` header, ACTION, TWEET, LINK, METRICS, TAGS, PRIORITY, MODE, DRAFT (in code block), REASON
-- For batches: add header `🐦 X KOL Engagement — N proposals ready`
+### Single Proposal Template
 
-See HEARTBEAT.md Step 3 for the complete template and Step 4 for the push flow.
+````
+────────────────────────────────────────
+📋 PROPOSAL #1 — @VitalikButerin
+────────────────────────────────────────
+🎯 TYPE:        Reply
+🐦 TWEET:       "Just shipped a new feature for account abstraction..."
+🔗 LINK:        https://x.com/VitalikButerin/status/1234567890
+📊 METRICS:     ❤️ 150  🔁 30  💬 25  📝 10
+🏷️ TAGS:        ethereum, founder
+⚡ PRIORITY:    high
+🎭 MODE:        🤓 Deep Tech
+
+💬 DRAFT:
+```
+This is a great step for UX in crypto. Account
+abstraction is exactly the kind of infra that makes
+autonomous agents viable on-chain. We're building
+similar composability into ZION's agent identity layer.
+```
+
+📝 REASON:
+High-priority KOL discussing account abstraction,
+directly relevant to ZION's agent identity architecture.
+Authentic technical engagement opportunity.
+────────────────────────────────────────
+````
+
+### Required Fields
+
+Every proposal MUST include ALL of these fields:
+
+| Field | Description |
+|-------|-------------|
+| `📋 PROPOSAL #N — @handle` | Header with sequence number and KOL handle |
+| `🎯 TYPE` | `Reply`, `Quote`, or `Original` — this is a label for the human, NOT an instruction for the agent |
+| `🐦 TWEET` | First ~80 chars of the original tweet text |
+| `🔗 LINK` | Direct URL: `https://x.com/{handle}/status/{tweet_id}` |
+| `📊 METRICS` | Like, RT, reply, bookmark counts from the tweet |
+| `🏷️ TAGS` | Tags from the watchlist entry |
+| `⚡ PRIORITY` | `high`, `medium`, or `low` from watchlist |
+| `🎭 MODE` | Personality mode used (see MESSAGE.md) |
+| `💬 DRAFT` | The draft text **inside a code block** (triple backticks) |
+| `📝 REASON` | Why this tweet is worth engaging with |
+
+### Batch Format
+
+When pushing multiple proposals, wrap them with a batch header:
+
+```
+🐦 X KOL Engagement — N proposals ready
+
+[Proposal #1]
+[Proposal #2]
+...
+
+Draft text is in code blocks — tap to copy.
+Links included for each tweet.
+```
+
+### Important Notes
+
+- The `🎯 TYPE` field is a **label for the human** describing what kind of engagement the draft is for. It is NOT an instruction for the agent to perform any action on X.
+- The agent's job ends at pushing the proposals. Do NOT ask the human to approve, confirm, or select proposals. Just push and move on.
 
 
 ---

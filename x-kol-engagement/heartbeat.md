@@ -44,9 +44,9 @@ Authentication is managed by xurl (stored in `~/.xurl`). No separate credentials
 
 ## 🎯 What To Do Each Cycle
 
-> **Note:** Pre-flight state checks (timing, date rollover, backoff, quiet hours) and post-cycle state updates are handled by the **local heartbeat entry** in `~/.openclaw/workspace/HEARTBEAT.md`. This file only describes the **tasks** to execute.
+> **Note:** Pre-flight state checks (timing, date rollover, backoff, quiet hours) and post-cycle state updates are handled by the **local heartbeat entry** in `~/.openclaw/workspace/HEARTBEAT.md`. This file only describes the **tasks** to run each cycle.
 
-Every heartbeat cycle, execute these tasks in order:
+Every heartbeat cycle, run these tasks in order:
 
 1. **Poll for new tweets** — Fetch latest tweets from watched KOLs → [Step 1](#step-1--fetch-new-tweets)
 2. **Triage & prioritize** — Score tweets by relevance, priority, metrics → [Step 2](#step-2--triage--prioritize)
@@ -122,7 +122,7 @@ For non-proposal messages (alerts, summaries), keep them concise and actionable.
 | `poll.last_poll_at` | Timestamp of last successful tweet poll |
 | `poll.global_since_id` | Highest tweet ID seen across all users — used as `since_id` in next search query |
 | `poll.per_user_latest` | Per-user tracking: `{ "user_id": { handle, latest_tweet_id, latest_tweet_at } }` |
-| `poll.poll_count_today` | Number of polls executed today (reset when `today` changes) |
+| `poll.poll_count_today` | Number of polls run today (reset when `today` changes) |
 | `poll.errors` | Last 5 poll errors for debugging |
 
 
@@ -149,7 +149,7 @@ Build batched search queries from the watchlist.
 - Max ~25 handles per query (due to 512-char query limit on Basic tier)
 - If watchlist has > 25 users, split into multiple batched queries
 - **Sort watchlist by `priority` first** (high → medium → low), so the first batch always contains the most important KOLs. Within the same priority, sort by handle length to pack queries efficiently.
-- ⚠️ **MUST execute ALL batched queries to cover the ENTIRE watchlist.** Do NOT stop after the first batch. Every KOL in the watchlist must be polled every cycle.
+- ⚠️ **MUST run ALL batched queries to cover the ENTIRE watchlist.** Do NOT stop after the first batch. Every KOL in the watchlist must be polled every cycle.
 
 **API call:**
 
@@ -212,36 +212,7 @@ For each prioritized tweet, draft a structured engagement proposal.
 4. Check `zion_mention_cooldown` — if > 0, do NOT mention ZION
 5. Apply all MESSAGE.md voice rules
 
-**Proposal format:**
-
-> **Draft text MUST be wrapped in a code block (triple backticks) so the human can one-tap copy it.** Every proposal MUST include a direct link to the original tweet.
-
-````
-────────────────────────────────────────
-📋 PROPOSAL #1 — @VitalikButerin
-────────────────────────────────────────
-🎯 ACTION:      REPLY
-🐦 TWEET:       "Just shipped a new feature for account abstraction..."
-🔗 LINK:        https://x.com/VitalikButerin/status/1234567890
-📊 METRICS:     ❤️ 150  🔁 30  💬 25  📝 10
-🏷️ TAGS:        ethereum, founder
-⚡ PRIORITY:    high
-🎭 MODE:        🤓 Deep Tech
-
-💬 DRAFT:
-```
-This is a great step for UX in crypto. Account
-abstraction is exactly the kind of infra that makes
-autonomous agents viable on-chain. We're building
-similar composability into ZION's agent identity layer.
-```
-
-📝 REASON:
-High-priority KOL discussing account abstraction,
-directly relevant to ZION's agent identity architecture.
-Authentic technical engagement opportunity.
-────────────────────────────────────────
-````
+**Proposal format — use the EXACT template defined in RULE.md Section 3.** You MUST use every field in the template. Do NOT simplify, abbreviate, or omit fields. See [RULE.md § Proposal Format](https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/rule.md) for the canonical template.
 
 **Per-cycle limits:** Max 15 proposals per cycle.
 
@@ -255,7 +226,7 @@ Authentic technical engagement opportunity.
 
 ### Step 4 — Push to Human
 
-Send all proposals to human via `message_tool`. This is a **fire-and-forget push** — the agent does NOT wait for approval or response.
+Send all proposals to human via `message_tool`. Push the drafts and move on. The human will read them and manually decide what to do on X. **Your job ends after pushing — do NOT ask the human to approve, confirm, or select proposals.**
 
 **Batch format:**
 

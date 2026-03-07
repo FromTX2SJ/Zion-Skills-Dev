@@ -44,11 +44,12 @@ This skill requires the **xurl** CLI tool for all X API interactions.
 After reading this skill, complete these tasks in order:
 
 1. **Verify xurl is ready** — Run `xurl auth status` to confirm authentication is configured. If not, ask your human to install and set up xurl first.
-2. **Fetch your X profile** — Call `xurl /2/users/me` to understand your persona → [Self-Identity](#self-identity)
-3. **Initialize watchlist** — Ask human for KOL list, resolve user IDs, auto-follow each → [Watchlist Management](#watchlist-management)
-4. **Register heartbeat** — Write task entry to `~/.openclaw/workspace/HEARTBEAT.md` → [Set Up Your Heartbeat](#set-up-your-heartbeat-💓)
-5. **Bootstrap identity** — Based on everything learned above (your X profile, ZION homepage, watchlist), autonomously update your identity, soul, and users information to reflect your persona as a ZION cofounder
-6. **Run first poll cycle** — Fetch HEARTBEAT.md from GitHub and execute it → [HEARTBEAT.md](https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md)
+2. **Install skill files locally** — Run the curl commands in [Skill Files](#skill-files) to download all skill files to `~/.openclaw/skills/zion-skills-dev/x-kol-engagement/`.
+3. **Fetch your X profile** — Call `xurl /2/users/me` to understand your persona → [Self-Identity](#self-identity)
+4. **Initialize watchlist** — Ask human for KOL list, resolve user IDs, auto-follow each → [Watchlist Management](#watchlist-management)
+5. **Register heartbeat** — Write task entry to `~/.openclaw/workspace/HEARTBEAT.md` → [Set Up Your Heartbeat](#set-up-your-heartbeat-💓)
+6. **Bootstrap identity** — Based on everything learned above (your X profile, ZION homepage, watchlist), autonomously update your identity, soul, and users information to reflect your persona as a ZION cofounder
+7. **Run first poll cycle** — Fetch HEARTBEAT.md from GitHub and follow it → [HEARTBEAT.md](https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md)
 
 > ⬇️ Details for each task are in the sections below.
 
@@ -187,7 +188,7 @@ Your human manages the watchlist via natural language:
 
 ### Auto-Follow on Add
 
-When a user is added to the watchlist, the agent **automatically follows them** without requiring separate approval. The rationale: if the human explicitly asks to monitor a KOL, following them is implied intent.
+When a user is added to the watchlist, the agent **automatically follows them**. The rationale: if the human explicitly asks to monitor a KOL, following them is implied intent.
 
 **On `add @handle`:**
 1. Resolve `user_id` via `GET /2/users/by`
@@ -249,7 +250,7 @@ xurl "/2/tweets/search/recent?query=(from:user1 OR from:user2 OR from:user3) -is
 - Batch up to ~25 handles per query (depends on handle length)
 - If watchlist > 25 users, split into multiple batched queries
 - **Sort watchlist by `priority` first** (high → medium → low)
-- ⚠️ **MUST execute ALL batched queries to cover the ENTIRE watchlist.**
+- ⚠️ **MUST run ALL batched queries to cover the ENTIRE watchlist.**
 - Use `-is:reply -is:retweet` to get only original tweets (reduces noise)
 
 **Pagination:** If `meta.next_token` exists, fetch next page. Limit to 3 pages max per batch.
@@ -303,19 +304,19 @@ For incremental fetching strategy and query construction rules, see HEARTBEAT.md
 ---
 
 
-## API Actions Summary
+## API Endpoints Used
 
 
-| Action | Endpoint | Auto? | Notes |
-|--------|----------|:-----:|-------|
-| **Fetch own profile** | `GET /2/users/me` | ✅ | Cache user ID |
-| **Search tweets** | `GET /2/tweets/search/recent` | ✅ | Core polling loop |
-| **Lookup users** | `GET /2/users/by` | ✅ | Watchlist add |
-| **Follow (on watchlist add)** | `POST /2/users/:id/following` | ✅ | Auto-follow on add |
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /2/users/me` | Fetch own profile, cache user ID |
+| `GET /2/tweets/search/recent` | Core polling loop — fetch KOL tweets |
+| `GET /2/users/by` | Resolve handles to user IDs (watchlist add) |
+| `POST /2/users/:id/following` | Auto-follow on watchlist add |
 
 > All endpoints are called via `xurl`. Auth is handled automatically by xurl.
 >
-> The agent does **not** call reply, like, retweet, quote, bookmark, or original post endpoints.
+> **These are the ONLY endpoints the agent uses.** The agent does **not** call reply, like, retweet, quote, bookmark, or original post endpoints. The agent has NO write capabilities on X other than following users when adding them to the watchlist.
 
 
 ---
@@ -355,7 +356,7 @@ After reading this skill file, you **MUST** register a heartbeat task by appendi
 - If `proposals_today` is at daily cap (see RULE.md) → skip drafting
 - Check quiet hours (00:00–07:00 America/Los_Angeles): if active, use 180 min interval instead of 60, and skip drafting proposals
 
-### 2. Execute — Fetch & Follow Heartbeat
+### 2. Run — Fetch & Follow Heartbeat
 - Fetch `https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md`
 - Follow the task steps inside it (poll, triage, draft, push)
 
@@ -382,7 +383,7 @@ Save all changes to `memory/x-kol-engagement/heartbeat-state.json`:
 │  = Scheduler + State Manager        │
 │                                     │
 │  1. CHECK STATE  ← pre-flight       │
-│  2. FETCH & EXECUTE ← remote task   │
+│  2. FETCH & RUN    ← remote task    │
 │  3. UPDATE STATE ← post-cycle       │
 └─────────────────────────────────────┘
 
