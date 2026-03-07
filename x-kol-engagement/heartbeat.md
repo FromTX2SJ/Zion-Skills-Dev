@@ -11,7 +11,7 @@ quiet_hours:
   end: "07:00"
   interval: 180
 
-description: Poll X API for new KOL tweets, draft engagement proposals, execute approved actions. Also runs 48h skill file sync.
+description: Poll X API for new KOL tweets, draft engagement proposals, execute approved actions.
 
 state_file: memory/x-kol-engagement/heartbeat-state.json
 
@@ -30,7 +30,7 @@ source_url: https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-k
 
 **Cycle:** Every 60 minutes (180 minutes during quiet hours 00:00–07:00 PT)
 
-**Purpose:** Fetch new tweets from watched KOLs, draft engagement proposals, push to human via `message_tool` for approval, execute approved actions. Also runs 48h skill file sync.
+**Purpose:** Fetch new tweets from watched KOLs, draft engagement proposals, push to human via `message_tool` for approval, execute approved actions.
 
 
 ## 📂 State Files
@@ -46,13 +46,12 @@ Authentication is managed by xurl (stored in `~/.xurl`). No separate credentials
 
 Every heartbeat cycle, execute these tasks in order:
 
-1. **Check 48h tasks** — If due: sync skill files from GitHub → [48-Hour Cycles](#48-hour-cycles)
-2. **Execute pending approvals** — Check `pending-proposals.json` for approved/expired proposals → [Step 0](#step-0--pre-flight)
-3. **Poll for new tweets** — Fetch latest tweets from watched KOLs → [Step 1](#step-1--fetch-new-tweets)
-4. **Triage & prioritize** — Score tweets by relevance, priority, metrics → [Step 2](#step-2--triage--prioritize)
-5. **Draft proposals** — Create engagement proposals using MESSAGE.md voice rules → [Step 3](#step-3--draft-engagement-proposals)
-6. **Push to human** — Send proposals via `message_tool`, save to pending queue — **non-blocking** → [Step 4](#step-4--push-to-human--save-as-pending-non-blocking)
-7. **Execute approved actions** — Run approved proposals, with RT/Quote fallback if needed → [Step 5](#step-5--execute-approved-actions)
+1. **Execute pending approvals** — Check `pending-proposals.json` for approved/expired proposals → [Step 0](#step-0--pre-flight)
+2. **Poll for new tweets** — Fetch latest tweets from watched KOLs → [Step 1](#step-1--fetch-new-tweets)
+3. **Triage & prioritize** — Score tweets by relevance, priority, metrics → [Step 2](#step-2--triage--prioritize)
+4. **Draft proposals** — Create engagement proposals using MESSAGE.md voice rules → [Step 3](#step-3--draft-engagement-proposals)
+5. **Push to human** — Send proposals via `message_tool`, save to pending queue — **non-blocking** → [Step 4](#step-4--push-to-human--save-as-pending-non-blocking)
+6. **Execute approved actions** — Run approved proposals, with RT/Quote fallback if needed → [Step 5](#step-5--execute-approved-actions)
 
 > ⬇️ Details for each step are in the sections below.
 
@@ -70,7 +69,6 @@ The agent **MUST** proactively push proposals, alerts, and summaries to the huma
 | Event | Send? | Priority |
 |-------|:-----:|----------|
 | Engagement proposals ready | ✅ YES | Normal |
-| Skill files updated (diff detected) | ✅ YES | Low |
 | API auth error (401/403) | ✅ YES | 🔴 Urgent |
 | Rate limit hit (429) | ✅ YES | ⚠️ Warning |
 | Daily summary | ✅ YES | Low |
@@ -122,7 +120,7 @@ For non-proposal messages (alerts, summaries), keep them concise and actionable.
 
 | Field | Description |
 |-------|-------------|
-| `status` | `IDLE`, `POLLING`, `DRAFTING`, `AWAITING_APPROVAL`, `EXECUTING`, `SYNCING`, `ERROR` |
+| `status` | `IDLE`, `POLLING`, `DRAFTING`, `AWAITING_APPROVAL`, `EXECUTING`, `ERROR` |
 | `last_run_at` | ISO 8601 timestamp of last completed cycle |
 | `next_run_at` | ISO 8601 timestamp of next scheduled cycle |
 | `last_result` | Summary of last cycle: `{ tweets_found, proposals_drafted, actions_executed }` |
@@ -140,79 +138,6 @@ For non-proposal messages (alerts, summaries), keep them concise and actionable.
 ---
 
 
-## 48-Hour Cycles
-
-
-Checked at the start of each heartbeat cycle.
-
-
-### Skill File Auto-Sync (Every 48 Hours)
-
-```
-STATUS → SYNCING
-```
-
-**Purpose:** Keep local skill files up-to-date by fetching from GitHub and detecting changes.
-
-**State file:** `memory/x-kol-engagement/skill-update-state.json`
-
-```json
-{
-  "last_check_at": "2025-03-01T12:00:00Z",
-  "next_check_at": "2025-03-02T12:00:00Z",
-  "files": {
-    "skill.md": { "url": ".../<file>", "local_path": ".../<FILE>", "last_updated_at": "...", "sha256": "...", "changed": false }
-    // Same structure for: heartbeat.md, rule.md, message.md, skill.json
-    // URLs from SKILL.md "Skill Files" table, local paths under ~/.openclaw/skills/zion-skills-dev/x-kol-engagement/
-  },
-  "update_history": []
-}
-```
-
-**Sync procedure:**
-
-1. **Check timing** — if `now < next_check_at`, skip sync this cycle.
-2. **Fetch each file** from its GitHub raw URL.
-3. **Compute SHA-256 hash** of fetched content.
-4. **Compare** with stored `sha256` for each file.
-5. **If no changes** — update `last_check_at`, set `next_check_at` = now + 48h. Done.
-6. **If changes detected:**
-   a. For each changed file, generate a human-readable diff summary (what sections changed, what's new/removed).
-   b. Overwrite the local file with the fetched version.
-   c. Update `sha256`, `last_updated_at`, set `changed: true` in state.
-   d. **Reload agent memory:**
-      - `RULE.md` changed → reload governance rules (rate limits, safety rails, approval workflow)
-      - `MESSAGE.md` changed → reload voice guide (personality modes, anti-monotony rules)
-      - `HEARTBEAT.md` changed → next cycle will use the new heartbeat logic
-      - `SKILL.md` changed → reload API reference, watchlist format, auth config
-      - `skill.json` changed → reload metadata
-   e. Append to `update_history`:
-      ```json
-      {
-        "at": "2025-03-02T12:00:00Z",
-        "files_changed": ["rule.md", "message.md"],
-        "summary": "rule.md: Updated daily caps for likes (50→40). message.md: Added new personality mode."
-      }
-      ```
-   f. **Notify human** via `message_tool`:
-      ```
-      🔄 Skill Files Updated
-
-      Changed files:
-      • rule.md — Updated daily caps for likes (50→40)
-      • message.md — Added new personality mode
-
-      Changes applied automatically. Review at:
-      https://github.com/FromTX2SJ/Zion-Skills-Dev/commits/main
-      ```
-7. Set `next_check_at` = now + 48h.
-
-**Keep `update_history` to last 20 entries** to avoid unbounded growth.
-
-
----
-
-
 ## Poll Cycle Steps
 
 
@@ -220,10 +145,8 @@ STATUS → SYNCING
 
 > **Note:** State checks (timing, date rollover, rate limits, backoff, quiet hours) have already been handled by the local heartbeat entry before this file is fetched. This step only handles task-level pre-flight.
 
-1. **Run 48h skill sync if due:**
-   - Check `memory/x-kol-engagement/skill-update-state.json` — if sync is due, run Skill File Auto-Sync (see [48-Hour Cycles](#48-hour-cycles))
-2. **Check pending proposals** — load `memory/x-kol-engagement/pending-proposals.json`. If there are any with `status: "approved"`, execute them first (jump to Step 5).
-3. **Load watchlist** from `memory/x-kol-engagement/x-watchlist.json`
+1. **Check pending proposals** — load `memory/x-kol-engagement/pending-proposals.json`. If there are any with `status: "approved"`, execute them first (jump to Step 5).
+2. **Load watchlist** from `memory/x-kol-engagement/x-watchlist.json`
    - If watchlist is empty → log "Watchlist empty. Ask human to add KOLs." → END
 
 
@@ -461,9 +384,6 @@ After each cycle completes, log a summary:
 ║  🔁 Retweets:  1/60                ║
 ║  👥 Follows:   2/15                ║
 ║  📢 Posts:     1/9                  ║
-╠══════════════════════════════════════╣
-║  48h Cycles                         ║
-║  🔄 Skill Sync:  ✅ Up to date     ║
 ╚══════════════════════════════════════╝
 ```
 

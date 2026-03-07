@@ -129,7 +129,6 @@ All skill files are stored under `~/.openclaw/skills/zion-skills-dev/x-kol-engag
         ├── heartbeat-state.json      # Heartbeat cycle state + poll tracking (since_id, per-user)
         ├── x-watchlist.json          # KOL watchlist
         ├── pending-proposals.json    # Non-blocking approval queue
-        ├── skill-update-state.json   # 48h skill file sync state
         └── reply-style-tracker.json  # Anti-monotony tracking (see MESSAGE.md)
 ```
 
@@ -537,4 +536,3 @@ Save all changes to `memory/x-kol-engagement/heartbeat-state.json`:
 | **Run first poll** | 🟠 After watchlist is populated |
 | **Draft engagement proposals** | 🟡 After each poll |
 | **Execute approved actions** | 🟡 After human approves |
-| **Update skill files** | 🔵 Periodically fetch from GitHub |

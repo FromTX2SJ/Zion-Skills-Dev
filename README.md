@@ -39,7 +39,6 @@ Autonomous X (Twitter) engagement skill for ZION cofounders. Polls KOL tweets, d
 | **Non-Blocking Approval** | Proposals pushed to human via `message_tool`, saved to pending queue — agent doesn't block waiting |
 | **5 Personality Modes** | 🔥 Spicy, 🤓 Deep Tech, 😄 Casual, 🧵 Story, 🤔 Philosophical — rotated per reply |
 | **Anti-Monotony Rules** | Tracks last 5 openers, modes, lengths — enforces variety, prevents template-robot behavior |
-| **48h Skill File Sync** | Fetches all skill files from GitHub every 48 hours, detects diffs via SHA-256, auto-reloads agent memory |
 | **Watchlist Auto-Follow** | Adding a KOL to watchlist auto-follows them (implied intent) |
 | **RT/Quote Fallback** | If retweet or quote tweet fails → posts as `{content} @handle {tweet_link}` instead |
 | **Quiet Hours** | 00:00–07:00 PT: poll-only mode, no proposals, bookmark high-priority tweets for later |
@@ -57,7 +56,6 @@ Autonomous X (Twitter) engagement skill for ZION cofounders. Polls KOL tweets, d
         ├── heartbeat-state.json    # Cycle state, daily action counters & poll tracking (since_id, per-user)
         ├── x-watchlist.json        # KOL watchlist
         ├── pending-proposals.json  # Non-blocking approval queue
-        ├── skill-update-state.json # 48h file sync state
         └── reply-style-tracker.json # Anti-monotony tracking
 ```
 
