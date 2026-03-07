@@ -192,9 +192,9 @@ Before drafting any reply, ask: *Would I say this face-to-face at a crypto confe
 
 | KOL Priority | Engagement Style |
 |-------------|-----------------|
-| **High** | Substantive technical replies. Add original insight. Reference shared context if any. Be memorable. Pick a personality mode that matches their energy. |
-| **Medium** | Thoughtful one-liner or brief take. Add perspective. Like + reply combo. |
-| **Low** | Like only, or brief supportive comment. Don't over-invest. |
+| **High** | Substantive technical draft. Add original insight. Reference shared context if any. Be memorable. Pick a personality mode that matches their energy. |
+| **Medium** | Thoughtful one-liner or brief take. Add perspective. Propose reply. |
+| **Low** | Brief supportive comment, or skip. Don't over-invest. |
 
 
 ---

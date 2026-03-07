@@ -1,139 +1,63 @@
 # Governance Rules
 
 
-Rules governing approval workflows, rate limits, safety rails, and watchlist management for X KOL engagement.
+Rules governing proposal limits, safety rails, and watchlist management for X KOL engagement.
+
+> **The agent does NOT execute any X API write actions.** It only polls, drafts proposals, and pushes them to the human. These rules govern what the agent should draft and what it should skip.
 
 
 ---
 
 
-## 1. Human Approval Workflow
-
-
-### Golden Rule
-
-> **Every X API write action that is publicly visible MUST be approved by your human before execution. No exceptions.**
-
-
-### Actions Requiring Approval
-
-| Action | Approval Required | Reason |
-|--------|:-----------------:|--------|
-| **Reply** | 🔴 YES | Public, represents ZION brand |
-| **Quote Tweet** | 🔴 YES | Public, represents ZION brand |
-| **Like** | 🔴 YES | Publicly visible on profile |
-| **Retweet** | 🔴 YES | Publicly visible on profile |
-| **Follow** | 🔴 YES | Publicly visible, signals alignment |
-| **Follow (on watchlist add)** | ✅ AUTO | Human's "add @handle" implies intent to follow |
-| **Original post** | 🔴 YES | Public, represents ZION brand |
-| **Bookmark** | ✅ AUTO | Private — no public visibility |
-| **Search tweets** | ✅ AUTO | Read-only |
-| **Lookup users** | ✅ AUTO | Read-only |
-
-
-### Proposal Format
-
-> **Draft text MUST be wrapped in a code block (triple backticks) so the human can one-tap copy it in Telegram.** This applies to all draft text in proposals — replies, quote tweets, and original posts.
->
-> **Every proposal MUST include a direct link to the original tweet** (`https://x.com/{handle}/status/{tweet_id}`) so the human can review the full context before approving.
-
-Use the **standard proposal format** defined in **HEARTBEAT.md Step 3**. Key rules:
-
-- Each proposal has: `📋 PROPOSAL #N — @handle` header, ACTION, TWEET, LINK, METRICS, TAGS, PRIORITY, MODE, DRAFT (in code block), REASON
-- For LIKE-only proposals, omit DRAFT and MODE fields
-- For batches: add header `🐦 X KOL Engagement — N proposals ready` and approval instructions at end
-
-See HEARTBEAT.md Step 3 for the complete template and Step 4 for the batch sending flow.
-
-
-### Approval Commands
-
-| Command | Effect |
-|---------|--------|
-| `approve all` | Execute all proposed actions |
-| `approve N` or `approve N,M` | Execute only specified proposals |
-| `reject N` or `reject all` | Skip specified or all proposals |
-| `edit N: new text` | Replace draft text for proposal N, then execute |
-| `hold` | Save proposals, don't execute — revisit later |
-
-
-### Rules
-
-- **Never auto-execute** a write action, even if the human previously approved a similar one
-- **Never combine approval steps** — present all proposals, wait for response, then execute
-- **If the human is unresponsive**, do NOT retry or re-prompt. Bookmark interesting tweets for later and move on
-- **Expired proposals** — if a tweet is > 24 hours old by the time approval comes, warn the human it may look stale
-
-
----
-
-
-## 2. Rate Limits
+## 1. Proposal Limits
 
 
 ### Per-Cycle Limits
 
 Enforced per heartbeat poll cycle (default: 60 min).
 
-| Action | Max Per Cycle |
+| Metric | Max Per Cycle |
 |--------|:------------:|
-| Replies | 15 |
-| Likes | 30 |
-| Quote Tweets | 9 |
-| Retweets | 15 |
-| Follows | 6 |
-| Original Posts | 3 |
-| Bookmarks | No limit |
+| Proposals | 15 |
 
 
-### Daily Caps
+### Daily Cap
 
 Reset at 00:00 UTC. Tracked in `memory/x-kol-engagement/heartbeat-state.json`.
 
-| Action | Max Per Day |
+| Metric | Max Per Day |
 |--------|:----------:|
-| Replies | 60 |
-| Likes | 150 |
-| Quote Tweets | 30 |
-| Retweets | 60 |
-| Follows | 15 |
-| Original Posts | 9 |
-| Bookmarks | No limit |
-
+| Proposals | 60 |
 
 ### Enforcement
 
-- **Before proposing** any action, check remaining daily quota
-- **If daily cap is hit**, inform the human: "Daily reply limit reached (20/20). Skipping reply proposals until tomorrow."
-- **Never exceed caps**, even if the human explicitly asks — explain the rate limit risk:
-  > "X API rate limits are strict. Exceeding them risks account suspension. I'll queue this for tomorrow."
-- Track all executed actions in `memory/x-kol-engagement/heartbeat-state.json` under `actions_today`
+- **Before drafting**, check remaining daily quota
+- **If daily cap is hit**, log: "Daily proposal limit reached. Skipping drafting until tomorrow."
+- Track proposals in `memory/x-kol-engagement/heartbeat-state.json` under `proposals_today`
 
 
 ### X API Platform Rate Limits (Reference)
 
-These are X's own enforced limits — hitting them returns HTTP 429:
+These are X's own enforced limits for the read endpoints we use:
 
 | Endpoint | App Limit | User Limit |
 |----------|-----------|------------|
-| `POST /2/tweets` | 100/15min | 100/15min |
-| `POST /2/users/:id/likes` | — | 100/15min |
-| `POST /2/users/:id/retweets` | — | 50/15min |
-| `POST /2/users/:id/following` | — | 15/15min |
 | `GET /2/tweets/search/recent` | 60/15min | 60/15min |
+| `GET /2/users/by` | 300/15min | 300/15min |
+| `POST /2/users/:id/following` | — | 15/15min |
 
-Our daily caps are deliberately **far below** these limits to avoid triggering rate limiters or appearing bot-like.
+The follow endpoint is only used for auto-follow on watchlist add.
 
 
 ---
 
 
-## 3. Safety Rails
+## 2. Safety Rails
 
 
 ### Content Prohibitions
 
-**NEVER engage with or create content involving:**
+**NEVER draft proposals for content involving:**
 
 | Category | Examples | Action |
 |----------|----------|--------|
@@ -168,9 +92,24 @@ Before finalizing any draft, verify:
 1. ✅ Does this add genuine value to the conversation?
 2. ✅ Would a real cofounder post this at a conference?
 3. ✅ Is this factually accurate based on public information?
-4. ✅ Could this be misinterpreted as financial advice? → If yes, don't post
+4. ✅ Could this be misinterpreted as financial advice? → If yes, don't draft
 5. ✅ Does this respect the other person's expertise and position?
 6. ✅ Is this tweet < 24 hours old? → If older, reconsider relevance
+
+
+---
+
+
+## 3. Proposal Format
+
+> **Draft text MUST be wrapped in a code block (triple backticks) so the human can one-tap copy it.** Every proposal MUST include a direct link to the original tweet (`https://x.com/{handle}/status/{tweet_id}`).
+
+Use the **standard proposal format** defined in **HEARTBEAT.md Step 3**. Key rules:
+
+- Each proposal has: `📋 PROPOSAL #N — @handle` header, ACTION, TWEET, LINK, METRICS, TAGS, PRIORITY, MODE, DRAFT (in code block), REASON
+- For batches: add header `🐦 X KOL Engagement — N proposals ready`
+
+See HEARTBEAT.md Step 3 for the complete template and Step 4 for the push flow.
 
 
 ---
@@ -230,7 +169,7 @@ Remove them to save API costs? Reply "remove @handle" for each.
 ---
 
 
-## 5. Error & Edge Case Handling
+## 5. Error Handling
 
 
 ### API Errors
@@ -238,41 +177,21 @@ Remove them to save API costs? Reply "remove @handle" for each.
 | Error | Action |
 |-------|--------|
 | `401 Unauthorized` | Stop all operations. Alert human: credentials may be expired/revoked |
-| `403 Forbidden` | Log and skip this action. May indicate blocked by target user |
+| `403 Forbidden` | Log and skip. May indicate blocked by target user |
 | `429 Too Many Requests` | Stop poll cycle immediately. Double next poll interval. Alert human |
 | `503 Service Unavailable` | Retry once after 60s. If still failing, skip cycle |
 | Network timeout | Retry once. If failing, skip cycle, increment `consecutive_errors` |
-
-
-### Retweet / Quote Tweet Fallback
-
-If a **retweet** or **quote tweet** fails (403, 429, or any error), the agent MUST attempt a fallback:
-
-1. **Construct a fallback tweet:** `"{draft_text}\n\n@{handle} https://x.com/{handle}/status/{tweet_id}"`
-2. **Post as a regular tweet** via `POST /2/tweets` (no `reply` or `quote_tweet_id` params)
-3. **Log:** `⚠️ Quote/RT failed → fallback posted as mention tweet`
-4. **If fallback also fails** → skip, log error, notify human
-
-| Original Action | Fallback Format |
-|----------------|----------------|
-| Retweet | `"🔁 @handle https://x.com/handle/status/ID"` |
-| Quote tweet | `"{draft_text}\n\n@handle https://x.com/handle/status/ID"` |
-
-This fallback does NOT apply to replies, likes, or follows (they are binary — succeed or fail).
 
 
 ### Edge Cases
 
 | Scenario | Rule |
 |----------|------|
-| KOL deletes tweet before you reply | Skip — do not reply to deleted content |
+| KOL deletes tweet before you draft | Skip — do not draft for deleted content |
 | KOL blocks your account | Remove from watchlist, notify human |
-| Tweet is in non-English language | Skip unless you're confident in translation |
+| Tweet is in non-English language | Skip unless confident in translation |
 | Tweet mentions ZION directly | High priority — always propose engagement |
-| Tweet is a thread (conversation_id ≠ tweet_id) | Reply to the thread starter, not individual parts |
-| Human hasn't responded to proposals in 3+ cycles | Pause engagement proposals, continue polling silently |
-| Pending proposals > 24 hours old | Auto-expire, remove from queue |
-| Pending proposals queue > 20 | Expire oldest pending proposals first |
+| Tweet is a thread (conversation_id ≠ tweet_id) | Draft for the thread starter, not individual parts |
 
 
 ---
@@ -280,17 +199,6 @@ This fallback does NOT apply to replies, likes, or follows (they are binary — 
 
 ## 6. Logging & Transparency
 
-
-### Action Log
-
-After executing any approved action, log it:
-
-```
-✅ Executed: REPLY to @VitalikButerin
-   Tweet ID: 1234567890
-   Our reply ID: 1234567899
-   Time: 2025-03-01T16:45:00Z
-```
 
 ### Daily Summary
 
@@ -300,15 +208,10 @@ At the end of each day (or when asked), provide a summary:
 ━━━ DAILY SUMMARY (2025-03-01) ━━━
 
 📊 Polls: 12 cycles
-📝 Proposals drafted: 8
-✅ Actions executed: 5 (3 replies, 1 like, 1 quote)
-❌ Rejected by human: 2
-⏭️ Skipped (safety): 1
+📋 Proposals drafted: 18
+⏭️ Skipped (safety): 3
 
-📈 Top engagement:
-   Reply to @VitalikButerin — 23 likes, 5 replies
-
-🔑 API calls: ~15 (12 search + 2 user lookup + 1 retry)
+🔑 API calls: ~13 (12 search + 1 user lookup)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
@@ -324,15 +227,16 @@ New tweet from watched KOL
   │
   ├─ Is topic in prohibited list? → SKIP
   │
-  ├─ Is tweet > 24 hours old? → SKIP (or bookmark)
+  ├─ Is tweet > 24 hours old? → SKIP
   │
   ├─ Does it fail self-censorship checks? → SKIP
   │
-  ├─ Are we at daily cap for this action type? → SKIP + notify human
+  ├─ Are we at daily proposal cap? → SKIP + log
   │
-  ├─ Draft engagement
+  ├─ Draft engagement proposal
   │   ├─ Apply MESSAGE.md voice rules
   │   ├─ Apply anti-patterns check
   │   └─ Format as proposal
   │
-  └─ Present to human → WAIT for approval → Execute (or skip)
+  └─ Push to human via message_tool
+```

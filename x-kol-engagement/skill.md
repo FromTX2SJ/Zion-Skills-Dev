@@ -1,9 +1,9 @@
 ---
 name: x-kol-engagement
 
-version: 0.1.0
+version: 0.2.0
 
-description: Monitor crypto KOLs on X (Twitter), draft engagement replies, and execute human-approved interactions as a ZION cofounder.
+description: Monitor crypto KOLs on X (Twitter), draft engagement proposals, and push them to the human — as a ZION cofounder.
 
 homepage: https://zion.space
 
@@ -15,12 +15,14 @@ metadata: {"emoji":"🐦","category":"social","api_base":"https://api.x.com/2"}
 # X KOL Engagement
 
 
-Monitor crypto KOLs on X (Twitter), draft contextual engagement messages, and post human-approved replies — all as a ZION cofounder.
+Monitor crypto KOLs on X (Twitter), draft contextual engagement proposals, and push them to the human — all as a ZION cofounder.
+
+> **The agent does NOT execute any X API write actions** (no replies, likes, retweets, quotes, bookmarks, or original posts). The agent only polls, drafts, and pushes proposals. The human decides what to post.
 
 
 ## 🔧 Prerequisites
 
-This skill requires the **xurl** CLI tool for all X API interactions (reads and writes).
+This skill requires the **xurl** CLI tool for all X API interactions.
 
 > ⚠️ **Before starting, tell your human:**
 > "This skill requires the **xurl** tool to interact with the X API. Please install and configure xurl first."
@@ -78,9 +80,6 @@ curl -s https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-e
 ```
 
 
-**Or just read the URLs above!**
-
-
 ---
 
 
@@ -106,7 +105,7 @@ xurl "/2/users/me?user.fields=name,username,description,profile_image_url,public
 
 Use the returned `name`, `description`, and `pinned_tweet_id` to calibrate your voice and ensure consistency with your public persona.
 
-> **Important:** The response includes your numeric `id` field. Cache this as your **agent user ID** — you'll need it for endpoints like `POST /2/users/:id/likes`, `POST /2/users/:id/following`, etc.
+> **Important:** The response includes your numeric `id` field. Cache this as your **agent user ID** — you'll need it for the follow endpoint when adding users to the watchlist.
 
 
 ---
@@ -126,9 +125,8 @@ All skill files are stored under `~/.openclaw/skills/zion-skills-dev/x-kol-engag
 ├── package.json                      # Metadata
 └── memory/
     └── x-kol-engagement/
-        ├── heartbeat-state.json      # Heartbeat cycle state + poll tracking (since_id, per-user)
+        ├── heartbeat-state.json      # Heartbeat cycle state + poll tracking
         ├── x-watchlist.json          # KOL watchlist
-        ├── pending-proposals.json    # Non-blocking approval queue
         └── reply-style-tracker.json  # Anti-monotony tracking (see MESSAGE.md)
 ```
 
@@ -198,8 +196,6 @@ When a user is added to the watchlist, the agent **automatically follows them** 
 4. Log: `✅ Added @handle to watchlist and followed`
 5. If follow fails (already following, rate limit, etc.) — log warning but still add to watchlist
 
-This is an **auto-approved action** — see RULE.md for the governance rule.
-
 
 ### User ID Resolution (One-Time Per Handle)
 
@@ -207,25 +203,6 @@ When adding a new handle, resolve the numeric `user_id` once and cache it:
 
 ```bash
 xurl "/2/users/by?usernames=VitalikButerin&user.fields=id,name,username,description,public_metrics"
-```
-
-**Response:**
-```json
-{
-  "data": [
-    {
-      "id": "295218901",
-      "name": "vitalik.eth",
-      "username": "VitalikButerin",
-      "description": "...",
-      "public_metrics": {
-        "followers_count": 5400000,
-        "following_count": 800,
-        "tweet_count": 25000
-      }
-    }
-  ]
-}
 ```
 
 **Batch lookup** — resolve up to 100 usernames in one call:
@@ -248,7 +225,6 @@ xurl "/2/users/by?usernames=user1,user2,user3&user.fields=id,name,username"
 ⚠️ **X API v2 is pay-as-you-go.** Every API call costs money. Minimize calls. Batch where possible. Cache aggressively.
 
 > All examples below use `xurl`. xurl handles authentication automatically based on the endpoint.
-> For details on auth flags (`--auth oauth2`, `--auth oauth1`, `--auth app`), refer to the xurl documentation you learned during setup.
 
 
 ### Search Recent Tweets (Batched — Primary Polling Method)
@@ -272,136 +248,46 @@ xurl "/2/tweets/search/recent?query=(from:user1 OR from:user2 OR from:user3) -is
 - Max query length: 512 characters (Basic) / 1024 characters (Pro)
 - Batch up to ~25 handles per query (depends on handle length)
 - If watchlist > 25 users, split into multiple batched queries
-- **Sort watchlist by `priority` first** (high → medium → low), so the first batch always contains the most important KOLs. Within the same priority, sort by handle length to pack queries efficiently.
-- ⚠️ **MUST execute ALL batched queries to cover the ENTIRE watchlist.** Do NOT stop after the first batch. Every KOL in the watchlist must be polled every cycle.
+- **Sort watchlist by `priority` first** (high → medium → low)
+- ⚠️ **MUST execute ALL batched queries to cover the ENTIRE watchlist.**
 - Use `-is:reply -is:retweet` to get only original tweets (reduces noise)
-- To also capture retweets of interest, run a separate query without the filter
 
-**Response:**
-```json
-{
-  "data": [
-    {
-      "id": "1234567890",
-      "text": "Just shipped a new feature for...",
-      "author_id": "295218901",
-      "created_at": "2025-03-01T15:30:00.000Z",
-      "public_metrics": {
-        "like_count": 150,
-        "retweet_count": 30,
-        "reply_count": 25,
-        "quote_count": 10
-      },
-      "conversation_id": "1234567890",
-      "entities": {
-        "urls": [...],
-        "mentions": [...],
-        "hashtags": [...]
-      }
-    }
-  ],
-  "includes": {
-    "users": [
-      {"id": "295218901", "name": "vitalik.eth", "username": "VitalikButerin"}
-    ]
-  },
-  "meta": {
-    "newest_id": "1234567895",
-    "oldest_id": "1234567890",
-    "result_count": 5,
-    "next_token": "..."
-  }
-}
-```
-
-**Pagination:** If `meta.next_token` exists, there are more results. Pass it as `next_token` param. But try to avoid pagination by using `since_id` properly.
+**Pagination:** If `meta.next_token` exists, fetch next page. Limit to 3 pages max per batch.
 
 
-### Post a Tweet (Reply)
+### Lookup Users
 
 ```bash
-xurl -X POST /2/tweets -d '{"text":"Your reply text here","reply":{"in_reply_to_tweet_id":"ORIGINAL_TWEET_ID"}}'
+xurl "/2/users/by?usernames=VitalikButerin&user.fields=id,name,username,description,public_metrics"
 ```
 
-🔴 **REQUIRES HUMAN APPROVAL.** See RULE.md.
+Used for resolving handles to user IDs when adding to watchlist.
 
 
-### Post a Quote Tweet
+### Fetch Own Profile
 
 ```bash
-xurl -X POST /2/tweets -d '{"text":"Your commentary here","quote_tweet_id":"ORIGINAL_TWEET_ID"}'
+xurl "/2/users/me?user.fields=name,username,description,profile_image_url,public_metrics,pinned_tweet_id"
 ```
 
-🔴 **REQUIRES HUMAN APPROVAL.**
+Cache the returned `id` as your agent user ID.
 
 
-### Like a Tweet
-
-```bash
-xurl -X POST /2/users/AGENT_USER_ID/likes -d '{"tweet_id":"TWEET_ID"}'
-```
-
-🔴 **REQUIRES HUMAN APPROVAL.**
-
-
-### Retweet
-
-```bash
-xurl -X POST /2/users/AGENT_USER_ID/retweets -d '{"tweet_id":"TWEET_ID"}'
-```
-
-🔴 **REQUIRES HUMAN APPROVAL.**
-
-
-### Follow a User
+### Follow a User (Watchlist Add Only)
 
 ```bash
 xurl -X POST /2/users/AGENT_USER_ID/following -d '{"target_user_id":"TARGET_USER_ID"}'
 ```
 
-🔴 **REQUIRES HUMAN APPROVAL.**
-
-⚠️ **No batch follow API.** To follow multiple users, loop and call one at a time. Rate limit: 15 requests per 15 minutes.
-
-
-### Bookmark a Tweet (Private — No Approval Needed)
-
-```bash
-xurl -X POST /2/users/AGENT_USER_ID/bookmarks -d '{"tweet_id":"TWEET_ID"}'
-```
-
-✅ No approval needed — bookmarks are private.
-
-
-### Post an Original Tweet
-
-```bash
-xurl -X POST /2/tweets -d '{"text":"Your original post text here"}'
-```
-
-🔴 **REQUIRES HUMAN APPROVAL.**
+Only used during watchlist add (auto-follow). Rate limit: 15 requests per 15 minutes.
 
 
 ### Response Handling
 
-xurl returns raw JSON from the X API. Parse the response to check for success or errors:
-
-- **Success (200/201):** Response contains `"data"` with the created resource (e.g., `data.id` for new tweets)
-- **Rate limited (429):** Check response for rate limit info. Back off and retry after reset time.
-- **Auth error (401/403):** Notify human to check xurl auth config (`xurl auth status`). For 403 on retweet/quote: try RT/Quote fallback (see HEARTBEAT.md).
-- **Other errors:** Log the error detail from the response JSON.
-
-**Success response example (POST /2/tweets):**
-```json
-{
-  "data": {
-    "id": "1234567899",
-    "text": "Your reply text here"
-  }
-}
-```
-
-> **Note:** For endpoints requiring your user ID (likes, follows, retweets, bookmarks), use the `id` you cached from `xurl /2/users/me` during setup.
+- **Success (200/201):** Response contains `"data"` with the resource
+- **Rate limited (429):** Back off and retry after reset time
+- **Auth error (401/403):** Notify human to check xurl auth config
+- **Other errors:** Log the error detail from the response JSON
 
 
 ---
@@ -417,24 +303,19 @@ For incremental fetching strategy and query construction rules, see HEARTBEAT.md
 ---
 
 
-## Engagement Actions Summary
+## API Actions Summary
 
 
-| Action | Endpoint | Approval | Cost Tier |
-|--------|----------|----------|-----------|
-| **Fetch own profile** | `GET /2/users/me` | ✅ Auto | 💰 Read |
-| **Search tweets** | `GET /2/tweets/search/recent` | ✅ Auto | 💰 Read |
-| **Lookup users** | `GET /2/users/by` | ✅ Auto | 💰 Read |
-| **Reply** | `POST /2/tweets` | 🔴 Human | 💰💰 Write |
-| **Quote tweet** | `POST /2/tweets` | 🔴 Human | 💰💰 Write |
-| **Like** | `POST /2/users/:id/likes` | 🔴 Human | 💰💰 Write |
-| **Retweet** | `POST /2/users/:id/retweets` | 🔴 Human | 💰💰 Write |
-| **Follow** | `POST /2/users/:id/following` | 🔴 Human (✅ Auto on watchlist add) | 💰💰 Write |
-| **Follow (on add)** | `POST /2/users/:id/following` | ✅ Auto | 💰💰 Write |
-| **Bookmark** | `POST /2/users/:id/bookmarks` | ✅ Auto | 💰 Write |
-| **Original post** | `POST /2/tweets` | 🔴 Human | 💰💰 Write |
+| Action | Endpoint | Auto? | Notes |
+|--------|----------|:-----:|-------|
+| **Fetch own profile** | `GET /2/users/me` | ✅ | Cache user ID |
+| **Search tweets** | `GET /2/tweets/search/recent` | ✅ | Core polling loop |
+| **Lookup users** | `GET /2/users/by` | ✅ | Watchlist add |
+| **Follow (on watchlist add)** | `POST /2/users/:id/following` | ✅ | Auto-follow on add |
 
 > All endpoints are called via `xurl`. Auth is handled automatically by xurl.
+>
+> The agent does **not** call reply, like, retweet, quote, bookmark, or original post endpoints.
 
 
 ---
@@ -469,14 +350,14 @@ After reading this skill file, you **MUST** register a heartbeat task by appendi
 ### 1. Pre-flight — Check State
 - Load `memory/x-kol-engagement/heartbeat-state.json`
 - If `last_run_at` exists and less than 60 minutes ago → SKIP this cycle
-- If `today` ≠ current date → reset `actions_today` to all zeros, reset `poll.poll_count_today` to 0, set `today` to current date. Also reset `reply-style-tracker.json`: set `minimalist_used_today = false`, `today` to current date
+- If `today` ≠ current date → reset `proposals_today` to 0, reset `poll.poll_count_today` to 0, set `today` to current date. Also reset `reply-style-tracker.json`: set `minimalist_used_today = false`, `today` to current date
 - If `consecutive_errors` ≥ 3 → double interval (wait 120 min instead of 60). If ≥ 6 → quadruple (240 min). Notify human via `message_tool`.
-- If any `actions_today` counter is at daily cap (see RULE.md) → note which action types are exhausted
-- Check quiet hours (00:00–07:00 America/Los_Angeles): if active, use 180 min interval instead of 60, and skip drafting proposals later
+- If `proposals_today` is at daily cap (see RULE.md) → skip drafting
+- Check quiet hours (00:00–07:00 America/Los_Angeles): if active, use 180 min interval instead of 60, and skip drafting proposals
 
 ### 2. Execute — Fetch & Follow Heartbeat
 - Fetch `https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md`
-- Follow the task steps inside it (poll, triage, draft, propose, execute)
+- Follow the task steps inside it (poll, triage, draft, push)
 
 ### 3. Post-cycle — Update State
 Save all changes to `memory/x-kol-engagement/heartbeat-state.json`:
@@ -484,10 +365,10 @@ Save all changes to `memory/x-kol-engagement/heartbeat-state.json`:
 - `last_run_at` → now (ISO 8601)
 - `next_run_at` → now + interval minutes
 - `cycle_count` += 1
-- `last_result` → `{ tweets_found, proposals_drafted, actions_executed }`
+- `last_result` → `{ tweets_found, proposals_drafted }`
 - `consecutive_errors` → reset to 0 on success, increment on error
 - `poll.*` → persist all poll tracking changes from step 2 (global_since_id, per_user_latest, poll_count_today, last_poll_at, errors)
-- `actions_today.*` → persist all action counter changes from step 2
+- `proposals_today` → persist proposal count changes from step 2
 ````
 
 **Write that block to the file now.** If `~/.openclaw/workspace/HEARTBEAT.md` doesn't exist, create it. If it already exists, append the block (don't duplicate if already present).
@@ -510,17 +391,11 @@ Save all changes to `memory/x-kol-engagement/heartbeat-state.json`:
 │  = Task Manual                      │
 │                                     │
 │  Only describes WHAT to do:         │
-│  poll, triage, draft, propose,      │
-│  execute approved actions           │
+│  poll, triage, draft, push          │
 └─────────────────────────────────────┘
 ```
 
-1. Your agent loop reads `~/.openclaw/workspace/HEARTBEAT.md` to discover all registered periodic tasks
-2. **Pre-flight:** The local entry tells the agent to load state, check timing, date rollover, rate limits, backoff, and quiet hours — all BEFORE fetching the remote file
-3. **Execute:** The agent fetches the **remote** `heartbeat.md` from GitHub and follows its task steps (poll KOLs, triage tweets, draft proposals, push to human, execute approved actions)
-4. **Post-cycle:** The local entry tells the agent exactly which state fields to update after the tasks complete
-
-**The local entry is the scheduler and state manager. The remote file is the task manual.** The remote URL is always fetched fresh on every cycle — never hardcode task logic locally. This way, task updates take effect immediately without reinstalling. But state management stays local so the agent always knows what to check and what to persist.
+**The local entry is the scheduler and state manager. The remote file is the task manual.** The remote URL is always fetched fresh on every cycle — never hardcode task logic locally.
 
 
 ---
@@ -534,5 +409,4 @@ Save all changes to `memory/x-kol-engagement/heartbeat-state.json`:
 | **Verify xurl is ready** | 🔴 Do first |
 | **Initialize watchlist** | 🔴 Ask human for initial KOL list |
 | **Run first poll** | 🟠 After watchlist is populated |
-| **Draft engagement proposals** | 🟡 After each poll |
-| **Execute approved actions** | 🟡 After human approves |
+| **Draft & push proposals** | 🟡 After each poll |

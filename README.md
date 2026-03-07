@@ -9,7 +9,7 @@ ZION agent skill definitions — fetched remotely by agents on every heartbeat c
 
 | Skill | Description | Entry Point |
 |-------|-------------|-------------|
-| 🐦 **x-kol-engagement** | Monitor crypto KOLs on X, draft engagement replies, execute human-approved interactions as a ZION cofounder. | [`skill.md`](x-kol-engagement/skill.md) |
+| 🐦 **x-kol-engagement** | Monitor crypto KOLs on X, draft engagement proposals, push to human — as a ZION cofounder. | [`skill.md`](x-kol-engagement/skill.md) |
 
 
 ---
@@ -17,7 +17,9 @@ ZION agent skill definitions — fetched remotely by agents on every heartbeat c
 
 ## x-kol-engagement
 
-Autonomous X (Twitter) engagement skill for ZION cofounders. Polls KOL tweets, drafts contextual replies, and executes human-approved actions.
+Autonomous X (Twitter) engagement skill for ZION cofounders. Polls KOL tweets, drafts contextual proposals, and pushes them to the human.
+
+> **The agent does NOT execute any X API write actions.** It only polls, drafts, and pushes proposals. The human decides what to post.
 
 
 ### Skill Files
@@ -25,9 +27,9 @@ Autonomous X (Twitter) engagement skill for ZION cofounders. Polls KOL tweets, d
 | File | Description |
 |------|-------------|
 | [`skill.md`](x-kol-engagement/skill.md) | Core skill definition — setup, API reference, watchlist management, onboarding task list |
-| [`heartbeat.md`](x-kol-engagement/heartbeat.md) | Heartbeat loop — per-cycle task list, polling, triage, proposals, execution |
+| [`heartbeat.md`](x-kol-engagement/heartbeat.md) | Heartbeat loop — per-cycle task list: polling, triage, drafting, push |
 | [`message.md`](x-kol-engagement/message.md) | Voice & persona guide — 5 personality modes, humor, anti-monotony rules |
-| [`rule.md`](x-kol-engagement/rule.md) | Governance — approval workflows, rate limits, safety rails, fallback rules |
+| [`rule.md`](x-kol-engagement/rule.md) | Governance — proposal limits, safety rails, watchlist governance |
 | [`skill.json`](x-kol-engagement/skill.json) | Package metadata |
 
 
@@ -36,13 +38,12 @@ Autonomous X (Twitter) engagement skill for ZION cofounders. Polls KOL tweets, d
 | Feature | Description |
 |---------|-------------|
 | **KOL Tweet Polling** | Every 60 min (180 min during quiet hours 00:00–07:00 PT), polls X API for new tweets from watched KOLs |
-| **Non-Blocking Approval** | Proposals pushed to human via `message_tool`, saved to pending queue — agent doesn't block waiting |
-| **5 Personality Modes** | 🔥 Spicy, 🤓 Deep Tech, 😄 Casual, 🧵 Story, 🤔 Philosophical — rotated per reply |
+| **Draft & Push** | Drafts engagement proposals with code-block text + tweet links, pushes to human via `message_tool` |
+| **5 Personality Modes** | 🔥 Spicy, 🤓 Deep Tech, 😄 Casual, 🧵 Story, 🤔 Philosophical — rotated per draft |
 | **Anti-Monotony Rules** | Tracks last 5 openers, modes, lengths — enforces variety, prevents template-robot behavior |
 | **Watchlist Auto-Follow** | Adding a KOL to watchlist auto-follows them (implied intent) |
-| **RT/Quote Fallback** | If retweet or quote tweet fails → posts as `{content} @handle {tweet_link}` instead |
-| **Quiet Hours** | 00:00–07:00 PT: poll-only mode, no proposals, bookmark high-priority tweets for later |
-| **Rate Limits** | Per-cycle and daily caps enforced for all action types (replies, likes, quotes, etc.) |
+| **Quiet Hours** | 00:00–07:00 PT: poll-only mode, no proposals |
+| **Safety Rails** | Content prohibitions, topic guardrails, self-censorship checks |
 
 
 ### Local Storage
@@ -53,9 +54,8 @@ Autonomous X (Twitter) engagement skill for ZION cofounders. Polls KOL tweets, d
 ├── package.json                                     # Metadata
 └── memory/
     └── x-kol-engagement/
-        ├── heartbeat-state.json    # Cycle state, daily action counters & poll tracking (since_id, per-user)
+        ├── heartbeat-state.json    # Cycle state, poll tracking (since_id, per-user)
         ├── x-watchlist.json        # KOL watchlist
-        ├── pending-proposals.json  # Non-blocking approval queue
         └── reply-style-tracker.json # Anti-monotony tracking
 ```
 
@@ -69,7 +69,7 @@ Authentication: managed by [xurl](https://github.com/xdevplatform/xurl) (stored 
 3. Fetches own X profile via `xurl /2/users/me`
 4. Asks human for initial KOL watchlist → auto-follows each
 5. Registers heartbeat task in `~/.openclaw/workspace/HEARTBEAT.md`
-6. Every 60 min: fetches [`heartbeat.md`](x-kol-engagement/heartbeat.md) from GitHub and executes it
+6. Every 60 min: fetches [`heartbeat.md`](x-kol-engagement/heartbeat.md) from GitHub → polls, drafts, pushes proposals
 
 
 ---
@@ -92,7 +92,7 @@ This means skill updates take effect immediately on the next cycle without reins
 | **skill.md** | Onboarding + reference — agent reads this once to set up, then periodically to stay current |
 | **heartbeat.md** | Execution loop — fetched and followed every cycle (the "what to do now" file) |
 | **message.md** | Voice guide — personality modes, tone calibration, anti-patterns |
-| **rule.md** | Governance — what's allowed, what's not, rate limits, approval workflows |
+| **rule.md** | Governance — proposal limits, safety rails, watchlist governance |
 | **skill.json** | Machine-readable metadata |
 
 
