@@ -42,10 +42,12 @@ Authentication is managed by xurl (stored in `~/.xurl`). No separate credentials
 
 ## 🎯 What To Do Each Cycle
 
+> **Note:** Pre-flight state checks (timing, date rollover, rate limits, backoff, quiet hours) and post-cycle state updates are handled by the **local heartbeat entry** in `~/.openclaw/workspace/HEARTBEAT.md`. This file only describes the **tasks** to execute.
+
 Every heartbeat cycle, execute these tasks in order:
 
 1. **Check 48h tasks** — If due: sync skill files from GitHub → [48-Hour Cycles](#48-hour-cycles)
-2. **Execute pending approvals** — Check `pending-proposals.json` for approved/expired proposals → [Step 0](#step-0--pre-flight-checks)
+2. **Execute pending approvals** — Check `pending-proposals.json` for approved/expired proposals → [Step 0](#step-0--pre-flight)
 3. **Poll for new tweets** — Fetch latest tweets from watched KOLs → [Step 1](#step-1--fetch-new-tweets)
 4. **Triage & prioritize** — Score tweets by relevance, priority, metrics → [Step 2](#step-2--triage--prioritize)
 5. **Draft proposals** — Create engagement proposals using MESSAGE.md voice rules → [Step 3](#step-3--draft-engagement-proposals)
@@ -255,25 +257,15 @@ STATUS → SYNCING
 ## Poll Cycle Steps
 
 
-### Step 0 — Pre-Flight Checks
+### Step 0 — Pre-Flight
 
-```
-STATUS → POLLING
-```
+> **Note:** State checks (timing, date rollover, rate limits, backoff, quiet hours) have already been handled by the local heartbeat entry before this file is fetched. This step only handles task-level pre-flight.
 
 1. **Run 48h skill sync if due:**
-   - Check `memory/x-kol-engagement/skill-update-state.json` — if sync is due, run Skill File Auto-Sync (see above)
+   - Check `memory/x-kol-engagement/skill-update-state.json` — if sync is due, run Skill File Auto-Sync (see [48-Hour Cycles](#48-hour-cycles))
 2. **Check pending proposals** — load `memory/x-kol-engagement/pending-proposals.json`. If there are any with `status: "approved"`, execute them first (jump to Step 5).
 3. **Load watchlist** from `memory/x-kol-engagement/x-watchlist.json`
-   - If watchlist is empty → log "Watchlist empty. Ask human to add KOLs." → set status `IDLE` → END
-4. **Load heartbeat state** from `memory/x-kol-engagement/heartbeat-state.json` (includes poll tracking in the `poll` sub-object)
-5. **Check date rollover** — if `today` ≠ current date, reset `actions_today` counters and `poll.poll_count_today` to 0
-6. **Check daily rate limits** — if any counter is at daily cap (see RULE.md), skip those action types this cycle
-7. **Check consecutive errors** — if ≥ 3, double the interval (backoff). Log warning.
-8. **Check quiet hours** — determine current time in `America/Los_Angeles` (US Pacific):
-   - If between **00:00–07:00 PT**: use `quiet_hours.interval` = **180 minutes** (every 3 hours). Poll only, skip drafting proposals (human is likely asleep). Bookmark high-priority tweets for later.
-   - Otherwise: use default `interval` = **60 minutes**
-   - Log: "🌙 Quiet hours active — polling every 180 min" or "☀️ Normal hours — polling every 60 min"
+   - If watchlist is empty → log "Watchlist empty. Ask human to add KOLs." → END
 
 
 ### Step 1 — Fetch New Tweets
@@ -323,14 +315,9 @@ xurl "/2/tweets/search/recent?query=(from:handle1 OR from:handle2 ...) -is:reply
 
 ### Step 2 — Triage & Prioritize
 
-```
-STATUS → DRAFTING
-```
-
 If Step 1 returned 0 tweets:
 - Log "No new tweets from watched KOLs"
-- Set `last_result = { tweets_found: 0, proposals_drafted: 0, actions_executed: 0 }`
-- Set status `IDLE` → END
+- END (the local heartbeat entry will handle post-cycle state updates)
 
 If tweets were found, score and rank them:
 
@@ -401,10 +388,6 @@ Authentic technical engagement opportunity.
 
 ### Step 4 — Push to Human & Save as Pending (Non-Blocking)
 
-```
-STATUS → AWAITING_APPROVAL
-```
-
 **This step is NON-BLOCKING.** The agent does NOT wait for human response before continuing to the next poll cycle.
 
 1. **Save proposals** to `memory/x-kol-engagement/pending-proposals.json`:
@@ -453,9 +436,7 @@ STATUS → AWAITING_APPROVAL
    Reply: approve all / approve 1,3 / reject all / edit 1: [text] / skip
    ````
 
-3. **Set status back to `IDLE`** — do NOT block on human response.
-
-5. **On next cycle**, check `pending-proposals.json`:
+3. **On next cycle**, check `pending-proposals.json`:
    - If human has responded with approvals → execute approved proposals in Step 5
    - If human has responded with edits → update draft text, mark as approved
    - If proposals are > 24 hours old (`expires_at` passed) → mark as `expired`, remove from pending
@@ -474,10 +455,6 @@ pending → (24h passed) → expired → (removed)
 
 
 ### Step 5 — Execute Approved Actions
-
-```
-STATUS → EXECUTING
-```
 
 For each approved proposal, execute in this order:
 
@@ -502,11 +479,7 @@ xurl -X POST /2/tweets -d '{"text":"APPROVED_REPLY_TEXT","reply":{"in_reply_to_t
 - Mark proposal as `executed` in `pending-proposals.json`
 - If any action fails with rate limit (429), stop execution and log remaining actions for next cycle
 
-**After all actions:**
-- Set `last_result = { tweets_found: N, proposals_drafted: M, actions_executed: K }`
-- Reset `consecutive_errors` to 0
-- Set status `IDLE`
-- Compute `next_run_at` = now + interval minutes
+**After all actions complete**, return control to the local heartbeat entry — it handles updating `last_result`, `consecutive_errors`, `status`, `last_run_at`, `next_run_at`, and `cycle_count`.
 
 
 ### Retweet / Quote Tweet Fallback

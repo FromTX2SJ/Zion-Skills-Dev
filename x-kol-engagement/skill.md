@@ -478,24 +478,66 @@ Poll tracking state is stored inside the `poll` sub-object of `memory/x-kol-enga
 
 After reading this skill file, you **MUST** register a heartbeat task by appending the following to `~/.openclaw/workspace/HEARTBEAT.md`:
 
-```markdown
+````markdown
 ## X KOL Engagement (every 60 minutes)
-If 60 minutes since last X KOL engagement check:
-1. Fetch https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md and follow it
-2. Update last_run_at timestamp in memory/x-kol-engagement/heartbeat-state.json
-```
+
+**State file:** `memory/x-kol-engagement/heartbeat-state.json`
+
+### 1. Pre-flight — Check State
+- Load `memory/x-kol-engagement/heartbeat-state.json`
+- If `last_run_at` exists and less than 60 minutes ago → SKIP this cycle
+- If `today` ≠ current date → reset `actions_today` to all zeros, reset `poll.poll_count_today` to 0, set `today` to current date
+- If `consecutive_errors` ≥ 3 → double interval (wait 120 min instead of 60). If ≥ 6 → quadruple (240 min). Notify human via `message_tool`.
+- If any `actions_today` counter is at daily cap (see RULE.md) → note which action types are exhausted
+- Check quiet hours (00:00–07:00 America/Los_Angeles): if active, use 180 min interval instead of 60, and skip drafting proposals later
+
+### 2. Execute — Fetch & Follow Heartbeat
+- Fetch `https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md`
+- Follow the task steps inside it (poll, triage, draft, propose, execute)
+
+### 3. Post-cycle — Update State
+Save all changes to `memory/x-kol-engagement/heartbeat-state.json`:
+- `status` → `IDLE` (or `ERROR` if cycle failed)
+- `last_run_at` → now (ISO 8601)
+- `next_run_at` → now + interval minutes
+- `cycle_count` += 1
+- `last_result` → `{ tweets_found, proposals_drafted, actions_executed }`
+- `consecutive_errors` → reset to 0 on success, increment on error
+- `poll.*` → persist all poll tracking changes from step 2 (global_since_id, per_user_latest, poll_count_today, last_poll_at, errors)
+- `actions_today.*` → persist all action counter changes from step 2
+````
 
 **Write that block to the file now.** If `~/.openclaw/workspace/HEARTBEAT.md` doesn't exist, create it. If it already exists, append the block (don't duplicate if already present).
 
 
 ### How the Heartbeat Works
 
-1. Your agent loop reads `~/.openclaw/workspace/HEARTBEAT.md` to discover all registered periodic tasks
-2. For this task, it fetches the **remote** `heartbeat.md` from GitHub to get the latest execution logic
-3. It follows the instructions in the fetched heartbeat.md (poll, triage, draft, approve, execute)
-4. It updates the timestamp in `memory/x-kol-engagement/heartbeat-state.json`
+```
+┌─────────────────────────────────────┐
+│  Local Entry (HEARTBEAT.md)         │
+│  = Scheduler + State Manager        │
+│                                     │
+│  1. CHECK STATE  ← pre-flight       │
+│  2. FETCH & EXECUTE ← remote task   │
+│  3. UPDATE STATE ← post-cycle       │
+└─────────────────────────────────────┘
 
-**The local entry is a task registration. The remote URL contains the actual logic.** Always fetch the remote URL on every cycle — never hardcode the execution logic locally. This way, updates to the heartbeat routine take effect immediately without reinstalling.
+┌─────────────────────────────────────┐
+│  Remote heartbeat.md (from GitHub)  │
+│  = Task Manual                      │
+│                                     │
+│  Only describes WHAT to do:         │
+│  poll, triage, draft, propose,      │
+│  execute approved actions           │
+└─────────────────────────────────────┘
+```
+
+1. Your agent loop reads `~/.openclaw/workspace/HEARTBEAT.md` to discover all registered periodic tasks
+2. **Pre-flight:** The local entry tells the agent to load state, check timing, date rollover, rate limits, backoff, and quiet hours — all BEFORE fetching the remote file
+3. **Execute:** The agent fetches the **remote** `heartbeat.md` from GitHub and follows its task steps (poll KOLs, triage tweets, draft proposals, push to human, execute approved actions)
+4. **Post-cycle:** The local entry tells the agent exactly which state fields to update after the tasks complete
+
+**The local entry is the scheduler and state manager. The remote file is the task manual.** The remote URL is always fetched fresh on every cycle — never hardcode task logic locally. This way, task updates take effect immediately without reinstalling. But state management stays local so the agent always knows what to check and what to persist.
 
 
 ---
