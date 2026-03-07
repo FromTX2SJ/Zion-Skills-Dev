@@ -77,12 +77,12 @@ Enforced per heartbeat poll cycle (default: 60 min).
 
 | Action | Max Per Cycle |
 |--------|:------------:|
-| Replies | 5 |
-| Likes | 10 |
-| Quote Tweets | 3 |
-| Retweets | 5 |
-| Follows | 2 |
-| Original Posts | 1 |
+| Replies | 15 |
+| Likes | 30 |
+| Quote Tweets | 9 |
+| Retweets | 15 |
+| Follows | 6 |
+| Original Posts | 3 |
 | Bookmarks | No limit |
 
 
@@ -92,12 +92,12 @@ Reset at 00:00 UTC. Tracked in `memory/x-kol-engagement/heartbeat-state.json`.
 
 | Action | Max Per Day |
 |--------|:----------:|
-| Replies | 20 |
-| Likes | 50 |
-| Quote Tweets | 10 |
-| Retweets | 20 |
-| Follows | 5 |
-| Original Posts | 3 |
+| Replies | 60 |
+| Likes | 150 |
+| Quote Tweets | 30 |
+| Retweets | 60 |
+| Follows | 15 |
+| Original Posts | 9 |
 | Bookmarks | No limit |
 
 

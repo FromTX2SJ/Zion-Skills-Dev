@@ -339,10 +339,10 @@ Authentic technical engagement opportunity.
 - 🔖 BOOKMARK — for reference-worthy content (auto-approved)
 
 **Respect per-cycle limits from RULE.md:**
-- Max 5 reply proposals per cycle
-- Max 3 quote tweet proposals per cycle
-- Max 10 like proposals per cycle
-- Max 2 follow proposals per cycle
+- Max 15 reply proposals per cycle
+- Max 9 quote tweet proposals per cycle
+- Max 30 like proposals per cycle
+- Max 6 follow proposals per cycle
 
 
 ### Step 4 — Push to Human & Save as Pending (Non-Blocking)
@@ -455,12 +455,12 @@ After each cycle completes, log a summary:
 ║  📬 Pending:      2                 ║
 ╠══════════════════════════════════════╣
 ║  Today's Totals                     ║
-║  💬 Replies:    8/20                ║
-║  ❤️ Likes:     22/50               ║
-║  📝 Quotes:    3/10                ║
-║  🔁 Retweets:  1/20                ║
-║  👥 Follows:   2/5                  ║
-║  📢 Posts:     1/5                  ║
+║  💬 Replies:    8/60                ║
+║  ❤️ Likes:     22/150              ║
+║  📝 Quotes:    3/30                ║
+║  🔁 Retweets:  1/60                ║
+║  👥 Follows:   2/15                ║
+║  📢 Posts:     1/9                  ║
 ╠══════════════════════════════════════╣
 ║  48h Cycles                         ║
 ║  🔄 Skill Sync:  ✅ Up to date     ║
