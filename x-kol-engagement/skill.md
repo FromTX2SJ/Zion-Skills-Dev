@@ -410,25 +410,9 @@ xurl returns raw JSON from the X API. Parse the response to check for success or
 
 ## Poll State Management
 
-Poll tracking state is stored inside the `poll` sub-object of `memory/x-kol-engagement/heartbeat-state.json` (not a separate file). See the [Heartbeat State](#heartbeat-state) section in HEARTBEAT.md for the full schema.
+Poll tracking is stored in the `poll` sub-object of `memory/x-kol-engagement/heartbeat-state.json`. See HEARTBEAT.md "Heartbeat State" for the full schema and field descriptions.
 
-**Key fields (all under `heartbeat-state.json → poll`):**
-
-| Field | Description |
-|-------|-------------|
-| `poll.last_poll_at` | Timestamp of last successful poll |
-| `poll.global_since_id` | Highest tweet ID seen across all users — used as `since_id` in next search |
-| `poll.per_user_latest` | Per-user tracking: `{ "user_id": { handle, latest_tweet_id, latest_tweet_at } }` |
-| `poll.poll_count_today` | Number of polls executed today (reset when top-level `today` changes) |
-| `poll.errors` | Last 5 poll errors for debugging |
-
-
-### Incremental Fetching Strategy
-
-1. On first poll (no `global_since_id`): fetch last 1 hour of tweets only. Set `start_time` param.
-2. On subsequent polls: use `since_id=global_since_id` to fetch only new tweets.
-3. After processing, update `global_since_id` to `meta.newest_id` from response.
-4. If a poll returns 0 results, that's fine — no wasted money, the since_id query is the cheapest path.
+For incremental fetching strategy and query construction rules, see HEARTBEAT.md Step 1 (Fetch New Tweets).
 
 
 ---

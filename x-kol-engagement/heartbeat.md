@@ -161,41 +161,9 @@ STATUS → SYNCING
   "last_check_at": "2025-03-01T12:00:00Z",
   "next_check_at": "2025-03-02T12:00:00Z",
   "files": {
-    "skill.md": {
-      "url": "https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/skill.md",
-      "local_path": "~/.openclaw/skills/zion-skills-dev/x-kol-engagement/SKILL.md",
-      "last_updated_at": "2025-03-01T12:00:00Z",
-      "sha256": "abc123...",
-      "changed": false
-    },
-    "heartbeat.md": {
-      "url": "https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/heartbeat.md",
-      "local_path": "~/.openclaw/skills/zion-skills-dev/x-kol-engagement/HEARTBEAT.md",
-      "last_updated_at": "2025-03-01T12:00:00Z",
-      "sha256": "def456...",
-      "changed": false
-    },
-    "rule.md": {
-      "url": "https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/rule.md",
-      "local_path": "~/.openclaw/skills/zion-skills-dev/x-kol-engagement/RULE.md",
-      "last_updated_at": "2025-03-01T12:00:00Z",
-      "sha256": "ghi789...",
-      "changed": false
-    },
-    "message.md": {
-      "url": "https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/message.md",
-      "local_path": "~/.openclaw/skills/zion-skills-dev/x-kol-engagement/MESSAGE.md",
-      "last_updated_at": "2025-03-01T12:00:00Z",
-      "sha256": "jkl012...",
-      "changed": false
-    },
-    "skill.json": {
-      "url": "https://raw.githubusercontent.com/FromTX2SJ/Zion-Skills-Dev/main/x-kol-engagement/skill.json",
-      "local_path": "~/.openclaw/skills/zion-skills-dev/x-kol-engagement/package.json",
-      "last_updated_at": "2025-03-01T12:00:00Z",
-      "sha256": "mno345...",
-      "changed": false
-    }
+    "skill.md": { "url": ".../<file>", "local_path": ".../<FILE>", "last_updated_at": "...", "sha256": "...", "changed": false }
+    // Same structure for: heartbeat.md, rule.md, message.md, skill.json
+    // URLs from SKILL.md "Skill Files" table, local paths under ~/.openclaw/skills/zion-skills-dev/x-kol-engagement/
   },
   "update_history": []
 }
@@ -402,68 +370,7 @@ Authentic technical engagement opportunity.
    }
    ```
 
-2. **Send to human** via `message_tool` — use the **exact same proposal format** from Step 3. Send all proposals as a batch with a header and approval instructions at the end:
-   ````
-   🐦 X KOL Engagement — 3 proposals ready
-
-   ────────────────────────────────────────
-   📋 PROPOSAL #1 — @VitalikButerin
-   ────────────────────────────────────────
-   🎯 ACTION:      REPLY
-   🐦 TWEET:       "Just shipped a new feature for account abstraction..."
-   🔗 TWEET_ID:    1234567890
-   🔗 LINK:        https://x.com/VitalikButerin/status/1234567890
-   📊 METRICS:     ❤️ 150  🔁 30  💬 25  📝 10
-   🏷️ TAGS:        ethereum, founder
-   ⚡ PRIORITY:    high
-   🎭 MODE:        🤓 Deep Tech
-
-   💬 DRAFT REPLY:
-   ```
-   This is a great step for UX in crypto. Account
-   abstraction is exactly the kind of infra that makes
-   autonomous agents viable on-chain.
-   ```
-
-   📝 REASON:
-   High-priority KOL discussing account abstraction,
-   directly relevant to ZION's agent identity architecture.
-   ────────────────────────────────────────
-
-   ────────────────────────────────────────
-   📋 PROPOSAL #2 — @VitalikButerin
-   ────────────────────────────────────────
-   🎯 ACTION:      LIKE
-   🐦 TWEET:       "Just shipped a new feature for account abstraction..."
-   🔗 LINK:        https://x.com/VitalikButerin/status/1234567890
-
-   📝 REASON:     Secondary action — boost visibility alongside reply.
-   ────────────────────────────────────────
-
-   ────────────────────────────────────────
-   📋 PROPOSAL #3 — @aeyakovenko
-   ────────────────────────────────────────
-   🎯 ACTION:      QUOTE
-   🐦 TWEET:       "The future of agent-to-agent commerce..."
-   🔗 TWEET_ID:    1234567891
-   🔗 LINK:        https://x.com/aeyakovenko/status/1234567891
-   📊 METRICS:     ❤️ 80  🔁 15  💬 12  📝 5
-   🏷️ TAGS:        solana, founder
-   ⚡ PRIORITY:    high
-   🎭 MODE:        🔥 Spicy
-
-   💬 DRAFT QUOTE:
-   ```
-   The real question is whether agents need their
-   own identity layer or piggyback on human wallets.
-   ```
-
-   📝 REASON:
-   Direct alignment with ZION agent identity mission.
-   ────────────────────────────────────────
-
-   Reply: approve all / approve 1,3 / reject all / edit 1: [text] / skip
-   ````
+2. **Send to human** via `message_tool` — use the **exact same proposal format** from Step 3. Add a header line (`🐦 X KOL Engagement — N proposals ready`) and approval instructions at the end (`Reply: approve all / approve 1,3 / reject all / edit 1: [text] / skip`). See RULE.md §1 for the full list of approval commands.
 
 3. **On next cycle**, check `pending-proposals.json`:
    - If human has responded with approvals → execute approved proposals in Step 5
@@ -513,41 +420,7 @@ xurl -X POST /2/tweets -d '{"text":"APPROVED_REPLY_TEXT","reply":{"in_reply_to_t
 
 ### Retweet / Quote Tweet Fallback
 
-If a **retweet** or **quote tweet** action fails (403, 429, or any error), apply the fallback strategy:
-
-1. **Construct a fallback tweet** instead:
-   ```
-   {approved_draft_text}
-
-   @{target_handle} https://x.com/{target_handle}/status/{tweet_id}
-   ```
-
-2. **Post as an original tweet** (not a reply, not a quote — just a regular `POST /2/tweets`):
-   ```bash
-   xurl -X POST /2/tweets -d '{"text":"APPROVED_TEXT\n\n@handle https://x.com/handle/status/TWEET_ID"}'
-   ```
-
-3. **Log the fallback:**
-   ```
-   ⚠️ Quote tweet failed (403). Fallback: posted as mention tweet.
-      Original action: QUOTE @VitalikButerin/1234567890
-      Fallback tweet ID: 9876543210
-   ```
-
-4. **If fallback also fails** → log error, skip this action, notify human:
-   ```
-   ❌ Quote tweet AND fallback both failed for @VitalikButerin.
-   Error: {error_message}. May need to check API permissions.
-   ```
-
-**Fallback applies to:**
-- ❌ Retweet fails → Post: `"🔁 @handle https://x.com/handle/status/ID"`
-- ❌ Quote tweet fails → Post: `"{draft_text}\n\n@handle https://x.com/handle/status/ID"`
-
-**Fallback does NOT apply to:**
-- Replies (they either work or they don't — no meaningful fallback)
-- Likes (binary — no fallback needed)
-- Follows (binary — no fallback needed)
+If a retweet or quote tweet fails, apply the fallback strategy defined in **RULE.md §5** (Retweet / Quote Tweet Fallback). In short: post as a regular tweet with `"{draft_text}\n\n@handle https://x.com/handle/status/ID"` instead.
 
 
 ---
@@ -555,24 +428,9 @@ If a **retweet** or **quote tweet** action fails (403, 429, or any error), apply
 
 ## Error Handling
 
+For API error responses and edge cases, see **RULE.md §5** (Error & Edge Case Handling).
 
-| Error | Response |
-|-------|----------|
-| **401 Unauthorized** | Auth token expired or invalid. Message human: "🔴 X API auth failed. Run `xurl auth status` to check." STOP. |
-| **403 Forbidden** | App permissions insufficient. For RT/Quote: try fallback. Otherwise message human. STOP. |
-| **429 Rate Limited** | Log the `x-rate-limit-reset` header. Back off until reset time. Message human. Do NOT retry immediately. |
-| **Network Error** | Increment `consecutive_errors`. Retry next cycle. |
-| **Empty Watchlist** | Message human: "No KOLs in watchlist. Use 'add @handle' to start monitoring." |
-| **Malformed State** | Re-initialize state file with defaults. Log warning. |
-
-
-### Backoff Strategy
-
-| Consecutive Errors | Behavior |
-|-------------------|----------|
-| 1–2 | Normal interval (60 min) |
-| 3–5 | Double interval (120 min) |
-| 6+ | Quadruple interval (240 min) + message human via `message_tool` |
+**Backoff strategy** is managed by the local heartbeat entry (see SKILL.md "Set Up Your Heartbeat" §1 Pre-flight).
 
 
 ---

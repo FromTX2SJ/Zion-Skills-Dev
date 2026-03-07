@@ -37,91 +37,13 @@ Rules governing approval workflows, rate limits, safety rails, and watchlist man
 >
 > **Every proposal MUST include a direct link to the original tweet** (`https://x.com/{handle}/status/{tweet_id}`) so the human can review the full context before approving.
 
-When presenting actions for approval, use the **standard proposal format** (same as HEARTBEAT.md Step 3). Every proposal uses this structure:
+Use the **standard proposal format** defined in **HEARTBEAT.md Step 3**. Key rules:
 
-````
-────────────────────────────────────────
-📋 PROPOSAL #1 — @handle
-────────────────────────────────────────
-🎯 ACTION:      REPLY | LIKE | QUOTE | RETWEET | FOLLOW
-🐦 TWEET:       "First 100 chars of their tweet..."
-🔗 TWEET_ID:    1234567890
-🔗 LINK:        https://x.com/handle/status/TWEET_ID
-📊 METRICS:     ❤️ 150  🔁 30  💬 25  📝 10
-🏷️ TAGS:        tag1, tag2
-⚡ PRIORITY:    high | medium | low
-🎭 MODE:        🤓 Deep Tech (for replies/quotes only)
+- Each proposal has: `📋 PROPOSAL #N — @handle` header, ACTION, TWEET, LINK, METRICS, TAGS, PRIORITY, MODE, DRAFT (in code block), REASON
+- For LIKE-only proposals, omit DRAFT and MODE fields
+- For batches: add header `🐦 X KOL Engagement — N proposals ready` and approval instructions at end
 
-💬 DRAFT REPLY:
-```
-Your drafted reply text here.
-```
-
-📝 REASON:
-1-sentence justification — why this engagement matters.
-────────────────────────────────────────
-````
-
-For batch proposals, send all with a header and approval instructions at the end:
-
-````
-🐦 X KOL Engagement — 3 proposals ready
-
-────────────────────────────────────────
-📋 PROPOSAL #1 — @VitalikButerin
-────────────────────────────────────────
-🎯 ACTION:      REPLY
-🐦 TWEET:       "Just shipped a new feature for..."
-🔗 TWEET_ID:    1234567890
-🔗 LINK:        https://x.com/VitalikButerin/status/1234567890
-📊 METRICS:     ❤️ 150  🔁 30  💬 25  📝 10
-🏷️ TAGS:        ethereum, founder
-⚡ PRIORITY:    high
-🎭 MODE:        🤓 Deep Tech
-
-💬 DRAFT REPLY:
-```
-This is really interesting because...
-```
-
-📝 REASON:
-High-priority KOL discussing AI agents.
-────────────────────────────────────────
-
-────────────────────────────────────────
-📋 PROPOSAL #2 — @aaboronkov
-────────────────────────────────────────
-🎯 ACTION:      LIKE
-🐦 TWEET:       "Thread on autonomous agent economics..."
-🔗 LINK:        https://x.com/aaboronkov/status/1234567891
-
-📝 REASON:
-Relevant to ZION's SHP model, signal boost.
-────────────────────────────────────────
-
-────────────────────────────────────────
-📋 PROPOSAL #3 — @balaboronkov
-────────────────────────────────────────
-🎯 ACTION:      QUOTE
-🐦 TWEET:       "The future of agent-to-agent..."
-🔗 TWEET_ID:    1234567892
-🔗 LINK:        https://x.com/balaboronkov/status/1234567892
-📊 METRICS:     ❤️ 80  🔁 15  💬 12  📝 5
-🏷️ TAGS:        agents, infra
-⚡ PRIORITY:    high
-🎭 MODE:        🔥 Spicy
-
-💬 DRAFT QUOTE:
-```
-We've been building exactly this at ZION...
-```
-
-📝 REASON:
-Direct alignment with ZION mission.
-────────────────────────────────────────
-
-Reply: approve all / approve 1,3 / reject 2 / edit 1: [new text] / reject all
-````
+See HEARTBEAT.md Step 3 for the complete template and Step 4 for the batch sending flow.
 
 
 ### Approval Commands
