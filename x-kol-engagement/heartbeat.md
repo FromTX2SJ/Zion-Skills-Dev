@@ -138,6 +138,23 @@ For non-proposal messages (alerts, summaries), keep them concise and actionable.
 ---
 
 
+## Pending Proposals
+
+
+### State File: `memory/x-kol-engagement/pending-proposals.json`
+
+```json
+{
+  "proposals": []
+}
+```
+
+Each proposal object has the schema shown in [Step 4](#step-4--push-to-human--save-as-pending-non-blocking). Max 20 pending proposals — expire oldest first if exceeded.
+
+
+---
+
+
 ## Poll Cycle Steps
 
 
@@ -334,11 +351,12 @@ xurl -X POST /2/tweets -d '{"text":"APPROVED_REPLY_TEXT","reply":{"in_reply_to_t
 **After each action:**
 - Log success/failure
 - Update `actions_today` counters in heartbeat state
-- Update `memory/x-kol-engagement/reply-style-tracker.json`:
-  - Record the mode, opener, and length used
-  - If reply/quote **mentions ZION** → set `zion_mention_cooldown = 2`
-  - If reply/quote **does NOT mention ZION** → set `zion_mention_cooldown = max(0, cooldown - 1)`
-  - Update `question_deficit`, `humor_deficit`, `minimalist_used_today` per MESSAGE.md Anti-Monotony Rules
+- Update `memory/x-kol-engagement/reply-style-tracker.json` (for reply/quote/original post actions only):
+  - Push mode to `last_5_modes`, opener to `last_5_openers`, length to `last_5_lengths` — if array exceeds 5, drop the oldest entry
+  - **zion_mention_cooldown:** if draft mentions ZION → set to `2`; otherwise → `max(0, cooldown - 1)`
+  - **question_deficit:** if reply is question-style → reset to `0`; otherwise → `+1`. If reaches `5`, next reply MUST be a question
+  - **humor_deficit:** if reply contains humor → reset to `0`; otherwise → `+1`. If reaches `8`, next reply MUST include humor
+  - **minimalist_used_today:** if reply is minimalist style (e.g. "This.", "Underrated.") → set to `true` (max 1 per day)
 - Mark proposal as `executed` in `pending-proposals.json`
 - If any action fails with rate limit (429), stop execution and log remaining actions for next cycle
 

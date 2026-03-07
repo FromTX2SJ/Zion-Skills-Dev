@@ -469,7 +469,7 @@ After reading this skill file, you **MUST** register a heartbeat task by appendi
 ### 1. Pre-flight — Check State
 - Load `memory/x-kol-engagement/heartbeat-state.json`
 - If `last_run_at` exists and less than 60 minutes ago → SKIP this cycle
-- If `today` ≠ current date → reset `actions_today` to all zeros, reset `poll.poll_count_today` to 0, set `today` to current date
+- If `today` ≠ current date → reset `actions_today` to all zeros, reset `poll.poll_count_today` to 0, set `today` to current date. Also reset `reply-style-tracker.json`: set `minimalist_used_today = false`, `today` to current date
 - If `consecutive_errors` ≥ 3 → double interval (wait 120 min instead of 60). If ≥ 6 → quadruple (240 min). Notify human via `message_tool`.
 - If any `actions_today` counter is at daily cap (see RULE.md) → note which action types are exhausted
 - Check quiet hours (00:00–07:00 America/Los_Angeles): if active, use 180 min interval instead of 60, and skip drafting proposals later
