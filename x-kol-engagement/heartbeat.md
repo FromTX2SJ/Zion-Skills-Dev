@@ -79,18 +79,9 @@ The agent **MUST** proactively push proposals, alerts, and summaries to the huma
 
 ### Message Format
 
-Keep messages concise but actionable:
+For engagement proposals, use the **standard proposal format** defined in [Step 3](#step-3--draft-engagement-proposals) — same format for drafting and sending. See [Step 4](#step-4--push-to-human--save-as-pending-non-blocking) for the full example of how to send a batch to the human.
 
-```
-🐦 X KOL Engagement — 4 proposals ready
-
-1. REPLY @VitalikButerin — "AA is the unlock..."
-2. LIKE @balaboronkov — agent economics thread
-3. QUOTE @aeyakovenko — "This changes..."
-4. LIKE @VitalikButerin — same thread
-
-Reply: approve all / approve 1,3 / reject all / skip
-```
+For non-proposal messages (alerts, summaries), keep them concise and actionable.
 
 
 ---
@@ -347,7 +338,7 @@ For each prioritized tweet, draft a structured engagement proposal.
 
 **Proposal format:**
 
-```
+````
 ────────────────────────────────────────
 📋 PROPOSAL #1 — @VitalikButerin
 ────────────────────────────────────────
@@ -373,7 +364,7 @@ High-priority KOL discussing account abstraction,
 directly relevant to ZION's agent identity architecture.
 Authentic technical engagement opportunity.
 ────────────────────────────────────────
-```
+````
 
 **Also suggest secondary actions per tweet where appropriate:**
 - 👍 LIKE — always suggest alongside reply/quote
@@ -411,27 +402,65 @@ Authentic technical engagement opportunity.
    }
    ```
 
-2. **Send to human** via `message_tool` (draft text in code blocks for one-tap copy in TG):
+2. **Send to human** via `message_tool` — use the **exact same proposal format** from Step 3. Send all proposals as a batch with a header and approval instructions at the end:
    ````
-   🐦 X KOL Engagement — 4 proposals ready
+   🐦 X KOL Engagement — 3 proposals ready
 
-   1. REPLY @VitalikButerin
-   🔗 https://x.com/VitalikButerin/status/1234567890
+   ────────────────────────────────────────
+   📋 PROPOSAL #1 — @VitalikButerin
+   ────────────────────────────────────────
+   🎯 ACTION:      REPLY
+   🐦 TWEET:       "Just shipped a new feature for account abstraction..."
+   🔗 TWEET_ID:    1234567890
+   🔗 LINK:        https://x.com/VitalikButerin/status/1234567890
+   📊 METRICS:     ❤️ 150  🔁 30  💬 25  📝 10
+   🏷️ TAGS:        ethereum, founder
+   ⚡ PRIORITY:    high
+   🎭 MODE:        🤓 Deep Tech
+
+   💬 DRAFT REPLY:
    ```
-   AA is the unlock, but the next step is...
+   This is a great step for UX in crypto. Account
+   abstraction is exactly the kind of infra that makes
+   autonomous agents viable on-chain.
    ```
 
-   2. LIKE @VitalikButerin — same thread
-   🔗 https://x.com/VitalikButerin/status/1234567890
+   📝 REASON:
+   High-priority KOL discussing account abstraction,
+   directly relevant to ZION's agent identity architecture.
+   ────────────────────────────────────────
 
-   3. QUOTE @aeyakovenko
-   🔗 https://x.com/aeyakovenko/status/1234567891
+   ────────────────────────────────────────
+   📋 PROPOSAL #2 — @VitalikButerin
+   ────────────────────────────────────────
+   🎯 ACTION:      LIKE
+   🐦 TWEET:       "Just shipped a new feature for account abstraction..."
+   🔗 LINK:        https://x.com/VitalikButerin/status/1234567890
+
+   📝 REASON:     Secondary action — boost visibility alongside reply.
+   ────────────────────────────────────────
+
+   ────────────────────────────────────────
+   📋 PROPOSAL #3 — @aeyakovenko
+   ────────────────────────────────────────
+   🎯 ACTION:      QUOTE
+   🐦 TWEET:       "The future of agent-to-agent commerce..."
+   🔗 TWEET_ID:    1234567891
+   🔗 LINK:        https://x.com/aeyakovenko/status/1234567891
+   📊 METRICS:     ❤️ 80  🔁 15  💬 12  📝 5
+   🏷️ TAGS:        solana, founder
+   ⚡ PRIORITY:    high
+   🎭 MODE:        🔥 Spicy
+
+   💬 DRAFT QUOTE:
    ```
-   The real question is...
+   The real question is whether agents need their
+   own identity layer or piggyback on human wallets.
    ```
 
-   4. LIKE @balaboronkov — agent economics thread
-   🔗 https://x.com/balaboronkov/status/1234567892
+   📝 REASON:
+   Direct alignment with ZION agent identity mission.
+   ────────────────────────────────────────
 
    Reply: approve all / approve 1,3 / reject all / edit 1: [text] / skip
    ````

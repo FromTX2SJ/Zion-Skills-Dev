@@ -37,62 +37,90 @@ Rules governing approval workflows, rate limits, safety rails, and watchlist man
 >
 > **Every proposal MUST include a direct link to the original tweet** (`https://x.com/{handle}/status/{tweet_id}`) so the human can review the full context before approving.
 
-When presenting actions for approval, use this structured format:
+When presenting actions for approval, use the **standard proposal format** (same as HEARTBEAT.md Step 3). Every proposal uses this structure:
 
 ````
-━━━ ENGAGEMENT PROPOSAL ━━━
+────────────────────────────────────────
+📋 PROPOSAL #1 — @handle
+────────────────────────────────────────
+🎯 ACTION:      REPLY | LIKE | QUOTE | RETWEET | FOLLOW
+🐦 TWEET:       "First 100 chars of their tweet..."
+🔗 TWEET_ID:    1234567890
+🔗 LINK:        https://x.com/handle/status/TWEET_ID
+📊 METRICS:     ❤️ 150  🔁 30  💬 25  📝 10
+🏷️ TAGS:        tag1, tag2
+⚡ PRIORITY:    high | medium | low
+🎭 MODE:        🤓 Deep Tech (for replies/quotes only)
 
-🎯 Target: @handle (priority: high)
-📝 Tweet: "First 100 chars of their tweet..."
-🔗 Link: https://x.com/handle/status/TWEET_ID
-
-Action: REPLY
-Draft:
+💬 DRAFT REPLY:
 ```
 Your drafted reply text here.
 ```
 
-Reason: [1-sentence justification — why this engagement matters]
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝 REASON:
+1-sentence justification — why this engagement matters.
+────────────────────────────────────────
 ````
 
-For batch proposals (multiple actions from one poll cycle), group and number them:
+For batch proposals, send all with a header and approval instructions at the end:
 
 ````
-━━━ ENGAGEMENT PROPOSALS (3 actions) ━━━
+🐦 X KOL Engagement — 3 proposals ready
 
-1/3 — REPLY to @VitalikButerin
-🔗 https://x.com/VitalikButerin/status/1234567890
-📝 "Just shipped a new feature for..."
-Draft:
+────────────────────────────────────────
+📋 PROPOSAL #1 — @VitalikButerin
+────────────────────────────────────────
+🎯 ACTION:      REPLY
+🐦 TWEET:       "Just shipped a new feature for..."
+🔗 TWEET_ID:    1234567890
+🔗 LINK:        https://x.com/VitalikButerin/status/1234567890
+📊 METRICS:     ❤️ 150  🔁 30  💬 25  📝 10
+🏷️ TAGS:        ethereum, founder
+⚡ PRIORITY:    high
+🎭 MODE:        🤓 Deep Tech
+
+💬 DRAFT REPLY:
 ```
 This is really interesting because...
 ```
-Reason: High-priority KOL discussing AI agents
 
-2/3 — LIKE @aaboronkov's tweet
-🔗 https://x.com/aaboronkov/status/1234567891
-📝 "Thread on autonomous agent economics..."
-Reason: Relevant to ZION's SHP model, signal boost
+📝 REASON:
+High-priority KOL discussing AI agents.
+────────────────────────────────────────
 
-3/3 — QUOTE @balaboronkov
-🔗 https://x.com/balaboronkov/status/1234567892
-📝 "The future of agent-to-agent..."
-Draft:
+────────────────────────────────────────
+📋 PROPOSAL #2 — @aaboronkov
+────────────────────────────────────────
+🎯 ACTION:      LIKE
+🐦 TWEET:       "Thread on autonomous agent economics..."
+🔗 LINK:        https://x.com/aaboronkov/status/1234567891
+
+📝 REASON:
+Relevant to ZION's SHP model, signal boost.
+────────────────────────────────────────
+
+────────────────────────────────────────
+📋 PROPOSAL #3 — @balaboronkov
+────────────────────────────────────────
+🎯 ACTION:      QUOTE
+🐦 TWEET:       "The future of agent-to-agent..."
+🔗 TWEET_ID:    1234567892
+🔗 LINK:        https://x.com/balaboronkov/status/1234567892
+📊 METRICS:     ❤️ 80  🔁 15  💬 12  📝 5
+🏷️ TAGS:        agents, infra
+⚡ PRIORITY:    high
+🎭 MODE:        🔥 Spicy
+
+💬 DRAFT QUOTE:
 ```
 We've been building exactly this at ZION...
 ```
-Reason: Direct alignment with ZION mission
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝 REASON:
+Direct alignment with ZION mission.
+────────────────────────────────────────
 
-Reply with:
-• "approve all" — execute all
-• "approve 1,3" — execute selected
-• "reject 2" — skip selected
-• "edit 1: new text here" — modify and approve
-• "reject all" — skip everything
+Reply: approve all / approve 1,3 / reject 2 / edit 1: [new text] / reject all
 ````
 
 
