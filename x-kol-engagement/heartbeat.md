@@ -334,7 +334,11 @@ xurl -X POST /2/tweets -d '{"text":"APPROVED_REPLY_TEXT","reply":{"in_reply_to_t
 **After each action:**
 - Log success/failure
 - Update `actions_today` counters in heartbeat state
-- Update `memory/x-kol-engagement/reply-style-tracker.json` with the mode, opener, and length used
+- Update `memory/x-kol-engagement/reply-style-tracker.json`:
+  - Record the mode, opener, and length used
+  - If reply/quote **mentions ZION** → set `zion_mention_cooldown = 2`
+  - If reply/quote **does NOT mention ZION** → set `zion_mention_cooldown = max(0, cooldown - 1)`
+  - Update `question_deficit`, `humor_deficit`, `minimalist_used_today` per MESSAGE.md Anti-Monotony Rules
 - Mark proposal as `executed` in `pending-proposals.json`
 - If any action fails with rate limit (429), stop execution and log remaining actions for next cycle
 
