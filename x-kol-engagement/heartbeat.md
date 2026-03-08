@@ -153,9 +153,29 @@ Build batched search queries from the watchlist.
 
 **API call:**
 
-```bash
-xurl "/2/tweets/search/recent?query=(from:handle1 OR from:handle2 ...) -is:reply -is:retweet&since_id=$GLOBAL_SINCE_ID&max_results=100&tweet.fields=id,text,author_id,created_at,public_metrics,referenced_tweets,entities,conversation_id&expansions=author_id,referenced_tweets.id&user.fields=name,username"
+> ⚠️ **The `query` parameter value MUST be URL-encoded.** xurl raw API mode does NOT auto-encode query parameters. Unencoded special characters (spaces, parentheses, colons) will cause 401 errors.
+
+**URL encoding reference:**
+
+| Character | Encoded | Example |
+|-----------|---------|---------|
+| space | `%20` | `OR` → `%20OR%20` |
+| `(` | `%28` | |
+| `)` | `%29` | |
+| `:` | `%3A` | `from:user` → `from%3Auser` |
+| `-` | `-` | No encoding needed |
+
+**Human-readable query (before encoding):**
 ```
+(from:handle1 OR from:handle2 OR from:handle3) -is:reply -is:retweet
+```
+
+**Encoded API call:**
+```bash
+xurl "/2/tweets/search/recent?query=%28from%3Ahandle1%20OR%20from%3Ahandle2%20OR%20from%3Ahandle3%29%20-is%3Areply%20-is%3Aretweet&since_id=$GLOBAL_SINCE_ID&max_results=100&tweet.fields=id,text,author_id,created_at,public_metrics,referenced_tweets,entities,conversation_id&expansions=author_id,referenced_tweets.id&user.fields=name,username"
+```
+
+> **Tip:** Build the query string in plain text first, then URL-encode **only the `query` value** (everything after `query=` and before the next `&`). The other parameter values (`since_id`, `tweet.fields`, etc.) don't need encoding because they only contain alphanumeric characters, commas, dots, and underscores.
 
 **First poll (no `global_since_id`):**
 - Add `start_time` param set to 1 hour ago (ISO 8601) instead of `since_id`

@@ -228,17 +228,34 @@ The response JSON contains `id`, `name`, `username`, `description`, and `public_
 
 The core of the polling loop. Search for recent tweets from ALL watched users in a single call.
 
-> **Note:** The `xurl search` shortcut only supports `-n` for result count. Since we need `since_id`, `start_time`, `tweet.fields`, and `expansions` for incremental polling, **use raw API mode** for search:
+> **Note:** The `xurl search` shortcut only supports `-n` for result count. Since we need `since_id`, `start_time`, `tweet.fields`, and `expansions` for incremental polling, **use raw API mode** for search.
 
-```bash
-xurl "/2/tweets/search/recent?query=(from:user1 OR from:user2 OR from:user3) -is:reply -is:retweet&since_id=LAST_SEEN_TWEET_ID&max_results=100&tweet.fields=id,text,author_id,created_at,public_metrics,referenced_tweets,entities,conversation_id&expansions=author_id,referenced_tweets.id&user.fields=name,username"
+> ⚠️ **URL Encoding Required:** When using raw API mode, the `query` parameter value **MUST be URL-encoded**. xurl does NOT auto-encode query parameters in raw mode. Unencoded spaces, parentheses, and colons will cause 401 errors.
+>
+> | Character | Encoded |
+> |-----------|---------|
+> | space | `%20` |
+> | `(` | `%28` |
+> | `)` | `%29` |
+> | `:` | `%3A` |
+
+**Human-readable query (before encoding):**
 ```
+(from:user1 OR from:user2 OR from:user3) -is:reply -is:retweet
+```
+
+**Encoded API call:**
+```bash
+xurl "/2/tweets/search/recent?query=%28from%3Auser1%20OR%20from%3Auser2%20OR%20from%3Auser3%29%20-is%3Areply%20-is%3Aretweet&since_id=LAST_SEEN_TWEET_ID&max_results=100&tweet.fields=id,text,author_id,created_at,public_metrics,referenced_tweets,entities,conversation_id&expansions=author_id,referenced_tweets.id&user.fields=name,username"
+```
+
+> **Tip:** Only the `query` value needs encoding. Other param values (`since_id`, `tweet.fields`, etc.) use safe characters only.
 
 **Key Parameters:**
 
 | Parameter | Description |
 |-----------|-------------|
-| `query` | `(from:user1 OR from:user2 ...)` — max ~25 users per query due to query length limits |
+| `query` | `(from:user1 OR from:user2 ...)` — max ~25 users per query due to query length limits. **Must be URL-encoded.** |
 | `since_id` | Only return tweets newer than this ID. Use the global max `since_id` from last poll. |
 | `max_results` | 10–100. Use `100` to minimize pagination calls. |
 | `tweet.fields` | Request only fields you need. |
